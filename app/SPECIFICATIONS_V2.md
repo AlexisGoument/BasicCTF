@@ -213,7 +213,6 @@ Enseigner la découverte de répertoires cachés et l'énumération
 ```
 ┌─────────────────────────────────────────────────────┐
 │ 🔐 Administration Panel                             │
-│ ⚠️ ACCÈS NON AUTORISÉ DÉTECTÉ                       │
 ├─────────────────────────────────────────────────────┤
 │ Vous avez découvert le panneau d'administration    │
 │ caché. Félicitations !                             │
