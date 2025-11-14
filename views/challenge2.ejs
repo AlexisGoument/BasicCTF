@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Challenge 2 - Path Traversal</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/">Dashboard</a> / Challenge 2
+        </div>
+
+        <div class="challenge-header">
+            <h1>🔍 Challenge 2 - Path Traversal</h1>
+            <p class="subtitle">Découvrez les répertoires cachés</p>
+        </div>
+
+        <div class="card">
+            <h2>📚 Description</h2>
+            <p>
+                Cette application contient des répertoires cachés non référencés. 
+                Utilisez des outils d'énumération pour les découvrir.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>📁 Répertoires publics connus</h2>
+            <ul class="documents-list">
+                <li>• <a href="/challenge2/public" class="link">/challenge2/public</a></li>
+                <li>• <a href="/challenge2/docs" class="link">/challenge2/docs</a></li>
+                <li>• <a href="/challenge2/help" class="link">/challenge2/help</a></li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>🛠️ Outils suggérés</h2>
+            <div class="code-block">
+                <pre>dirb http://localhost:3000/challenge2/</pre>
+                <pre>gobuster dir -u http://localhost:3000/challenge2/ -w wordlist.txt</pre>
+                <pre>Énumération manuelle des répertoires</pre>
+            </div>
+        </div>
+
+        <div class="card hints">
+            <h2>💡 Indices</h2>
+            <ul>
+                <li>• Cherchez des répertoires administratifs</li>
+                <li>• Testez des noms communs (admin, config, etc.)</li>
+                <li>• Utilisez une wordlist pour l'énumération</li>
+            </ul>
+        </div>
+
+        <div class="back-button">
+            <a href="/" class="btn">← Retour au Dashboard</a>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

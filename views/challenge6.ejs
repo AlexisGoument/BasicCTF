@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Challenge 6 - Cross-Site Scripting (XSS)</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/">Dashboard</a> / Challenge 6
+        </div>
+
+        <div class="challenge-header">
+            <h1>🚨 Challenge 6 - Cross-Site Scripting (XSS)</h1>
+            <p class="subtitle">Injectez du JavaScript malveillant</p>
+        </div>
+
+        <div class="card">
+            <h2>📚 Description</h2>
+            <p>
+                Cette zone de commentaires ne filtre pas les entrées utilisateurs. 
+                Exploitez cette faille pour exécuter du JavaScript.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>💬 Poster un commentaire</h2>
+            <form action="/challenge6/comment" method="POST" class="comment-form">
+                <div class="form-group">
+                    <label for="author">Nom:</label>
+                    <input type="text" id="author" name="author" required>
+                </div>
+                <div class="form-group">
+                    <label for="text">Commentaire:</label>
+                    <textarea id="text" name="text" rows="4" required></textarea>
+                </div>
+                <button type="submit" class="btn">Publier</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>💭 Commentaires récents</h2>
+            <div class="comments-list">
+                <% comments.forEach(comment => { %>
+                    <div class="comment">
+                        <strong>👤 <%= comment.author %>:</strong>
+                        <!-- VULNÉRABLE: Utilisation de <%- au lieu de <%= pour ne pas échapper le HTML -->
+                        <span><%- comment.text %></span>
+                    </div>
+                <% }); %>
+            </div>
+        </div>
+
+        <div class="card hints">
+            <h2>💡 Indices</h2>
+            <ul>
+                <li>• Testez avec des balises HTML (&lt;b&gt;, &lt;i&gt;)</li>
+                <li>• Essayez d'injecter du JavaScript (&lt;script&gt;)</li>
+                <li>• Le flag peut être accessible via document.cookie</li>
+                <li>• Payload exemple: <code>&lt;script&gt;alert(document.cookie)&lt;/script&gt;</code></li>
+                <li>• Inspectez les cookies du navigateur</li>
+            </ul>
+        </div>
+
+        <div class="back-button">
+            <a href="/" class="btn">← Retour au Dashboard</a>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

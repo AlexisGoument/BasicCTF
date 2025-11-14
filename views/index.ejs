@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTF Security Challenge - Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <div class="container">
+        <div class="dashboard-header">
+            <h1>🏆 CTF Security Challenge</h1>
+            <div class="score-info">
+                <span class="score">Score: <%= totalPoints %> points</span>
+                <span class="progress"><%= foundFlags.length %>/7 challenges terminés</span>
+            </div>
+        </div>
+
+        <!-- Zone de validation des flags -->
+        <div class="card flag-validation">
+            <h2>🔑 Validation des Flags</h2>
+            <form action="/validate-flag" method="POST" class="flag-form">
+                <input type="text" name="flag" placeholder="CTF{...}" required>
+                <button type="submit">Valider Flag</button>
+            </form>
+            
+            <% if (message) { %>
+                <div class="message <%= message.type %>">
+                    <%= message.text %>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- Liste des challenges -->
+        <div class="card challenges-list">
+            <h2>📋 Challenges</h2>
+            <p class="subtitle">Difficulté: Facile (tous les challenges valent 100 points)</p>
+            
+            <div class="challenges">
+                <% challenges.forEach(challenge => { %>
+                    <div class="challenge-item <%= challenge.status %>">
+                        <div class="challenge-info">
+                            <span class="status-icon">
+                                <% if (challenge.status === 'completed') { %>
+                                    ✅
+                                <% } else if (challenge.status === 'in_progress') { %>
+                                    ⏳
+                                <% } else { %>
+                                    ❌
+                                <% } %>
+                            </span>
+                            <div class="challenge-details">
+                                <h3>Challenge <%= challenge.id %> - <%= challenge.name %></h3>
+                                <span class="points">[<%= challenge.points %>pt]</span>
+                            </div>
+                        </div>
+                        <a href="/challenge<%= challenge.id %>" class="btn-challenge">Accéder</a>
+                    </div>
+                <% }); %>
+            </div>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

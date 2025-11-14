@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Challenge 7 - Git Secrets & Version Control Security</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/">Dashboard</a> / Challenge 7
+        </div>
+
+        <div class="challenge-header">
+            <h1>🔐 Challenge 7 - Git Secrets & Version Control</h1>
+            <p class="subtitle">Explorez l'historique du contrôle de version</p>
+        </div>
+
+        <div class="card">
+            <h2>📚 Description</h2>
+            <p>
+                Les développeurs commettent parfois des erreurs et exposent des informations 
+                sensibles dans l'historique Git. Votre mission est de découvrir ces secrets cachés.
+            </p>
+            <p>
+                Le flag n'est pas visible dans le code actuel de l'application, mais il existe 
+                quelque part dans l'historique des commits Git de ce projet.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>🛠️ Outils suggérés pour l'analyse</h2>
+            <div class="code-block">
+                <pre>gitleaks detect --source . --verbose</pre>
+                <pre>git log --oneline --all</pre>
+                <pre>git show &lt;commit-hash&gt;</pre>
+                <pre>git log -p --all | grep -i "CTF{"</pre>
+                <pre>truffleHog --regex --entropy=false .</pre>
+            </div>
+        </div>
+
+        <div class="card hints">
+            <h2>💡 Indices</h2>
+            <ul>
+                <li>• Les secrets ne sont pas toujours dans le code actuel mais peuvent être dans l'historique</li>
+                <li>• Inspectez les commits précédents</li>
+                <li>• Utilisez des outils de détection de secrets (gitleaks, truffleHog)</li>
+                <li>• Vérifiez les fichiers de configuration qui ont été supprimés</li>
+                <li>• Cherchez des fichiers comme .env, config.js, database.js dans l'historique</li>
+            </ul>
+        </div>
+
+        <div class="back-button">
+            <a href="/" class="btn">← Retour au Dashboard</a>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+</body>
+</html>
