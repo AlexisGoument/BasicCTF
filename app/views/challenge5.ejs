@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Challenge 5 - Broken Authentication</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/">Dashboard</a> / Challenge 5
+        </div>
+
+        <div class="challenge-header">
+            <h1>🔐 Challenge 5 - Broken Authentication</h1>
+            <p class="subtitle">Contournez les faiblesses de ce système</p>
+        </div>
+
+        <div class="card">
+            <h2>📚 Description</h2>
+            <p>
+                Ce système d'authentification révèle des informations sensibles. 
+                Exploitez ces faiblesses pour découvrir le flag.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>🔑 Formulaire de connexion</h2>
+            <form action="/challenge5/login" method="POST" class="login-form">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn" onclick="return validateForm()">Se connecter</button>
+            </form>
+
+            <% if (message) { %>
+                <div class="message <%= message.type %>">
+                    <%= message.text %>
+                </div>
+            <% } %>
+        </div>
+
+        <div class="card hints">
+            <h2>💡 Indices</h2>
+            <ul>
+                <li>• Testez différents usernames (admin, root, test)</li>
+                <li>• Observez les messages d'erreur différents</li>
+                <li>• Inspectez les cookies et headers de réponse</li>
+                <li>• Regardez le code source et JavaScript</li>
+                <li>• Le mot de passe pourrait être faible (ex: suite de chiffres)</li>
+            </ul>
+        </div>
+
+        <div class="back-button">
+            <a href="/" class="btn">← Retour au Dashboard</a>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+
+    <script>
+        // Validation côté client facilement contournable
+        function validateForm() {
+            var username = document.getElementById('username').value;
+            var password = document.getElementById('password').value;
+            
+            // Vulnérabilité: logique de validation exposée côté client
+            if (password.length < 10) {
+                // Information qui fuite: le mot de passe fait au moins 10 caractères
+                console.log('Hint: Le mot de passe doit faire au moins 10 caractères');
+            }
+            
+            return true; // Validation contournable
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Challenge 3 - SQL Injection</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/">Dashboard</a> / Challenge 3
+        </div>
+
+        <div class="challenge-header">
+            <h1>💉 Challenge 3 - SQL Injection</h1>
+            <p class="subtitle">Contournez l'authentification via injection SQL</p>
+        </div>
+
+        <div class="card">
+            <h2>📚 Description</h2>
+            <p>
+                Ce formulaire de connexion est vulnérable aux injections SQL. 
+                Exploitez cette faille pour vous connecter sans connaître le mot de passe.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>🔑 Formulaire de connexion</h2>
+            <form action="/challenge3/login" method="POST" class="login-form">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn">Se connecter</button>
+            </form>
+
+            <% if (message) { %>
+                <div class="message <%= message.type %>">
+                    <%= message.text %>
+                </div>
+            <% } %>
+
+            <% if (error) { %>
+                <div class="error-display">
+                    <strong>Erreur SQL exposée:</strong>
+                    <pre><%= error %></pre>
+                </div>
+            <% } %>
+        </div>
+
+        <div class="card hints">
+            <h2>💡 Indices</h2>
+            <ul>
+                <li>• Testez avec des caractères spéciaux (' " ; --)</li>
+                <li>• Essayez des payloads d'auth bypass classiques</li>
+                <li>• La requête SQL est probablement SELECT * FROM...</li>
+                <li>• Observez les messages d'erreur SQL</li>
+                <li>• Exemple de payload: <code>admin' --</code> ou <code>' OR '1'='1' --</code></li>
+            </ul>
+        </div>
+
+        <div class="back-button">
+            <a href="/" class="btn">← Retour au Dashboard</a>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

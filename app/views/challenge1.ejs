@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Challenge 1 - Insecure Direct Object Reference</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/">Dashboard</a> / Challenge 1
+        </div>
+
+        <div class="challenge-header">
+            <h1>🎯 Challenge 1 - Insecure Direct Object Reference</h1>
+            <p class="subtitle">Accédez aux ressources non autorisées</p>
+        </div>
+
+        <div class="card">
+            <h2>📚 Description</h2>
+            <p>
+                Cette application utilise des références directes non sécurisées. 
+                Modifiez les URLs pour accéder aux ressources protégées.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>📄 Documents publics accessibles</h2>
+            <ul class="documents-list">
+                <li>• Document public <a href="/challenge1/doc/1" class="link">[Voir: /challenge1/doc/1]</a></li>
+                <li>• Guide utilisateur <a href="/challenge1/doc/2" class="link">[Voir: /challenge1/doc/2]</a></li>
+                <li>• FAQ générale <a href="/challenge1/doc/3" class="link">[Voir: /challenge1/doc/3]</a></li>
+            </ul>
+        </div>
+
+        <% if (doc && !doc.error) { %>
+        <div class="card document-view <%= doc.confidential ? 'confidential' : '' %>">
+            <h2>📄 <%= doc.title %></h2>
+            <div class="document-content">
+                <%= doc.content %>
+            </div>
+        </div>
+        <% } else if (doc && doc.error) { %>
+        <div class="card error">
+            <p><%= doc.error %></p>
+        </div>
+        <% } %>
+
+        <div class="card hints">
+            <h2>💡 Indices</h2>
+            <ul>
+                <li>• Testez différents IDs dans l'URL</li>
+                <li>• Les IDs sont prévisibles (incrémentation simple)</li>
+                <li>• Essayez avec des valeurs comme 0, 4, 5...</li>
+            </ul>
+        </div>
+
+        <div class="back-button">
+            <a href="/" class="btn">← Retour au Dashboard</a>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

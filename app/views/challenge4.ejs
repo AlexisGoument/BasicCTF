@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Challenge 4 - SQL Injection Avancé</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/">Dashboard</a> / Challenge 4
+        </div>
+
+        <div class="challenge-header">
+            <h1>💉 Challenge 4 - SQL Injection Avancé</h1>
+            <p class="subtitle">Exploitez la recherche d'utilisateurs</p>
+        </div>
+
+        <div class="card">
+            <h2>📚 Description</h2>
+            <p>
+                Cette fonction de recherche est vulnérable aux injections SQL. 
+                Utilisez des techniques avancées pour extraire des données de la base.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>🔍 Rechercher un utilisateur</h2>
+            <form action="/challenge4/search" method="POST" class="search-form">
+                <div class="form-group">
+                    <input type="text" name="search" placeholder="Rechercher par nom d'utilisateur..." required>
+                    <button type="submit" class="btn">Rechercher</button>
+                </div>
+            </form>
+
+            <% if (results && results.length > 0) { %>
+                <div class="search-results">
+                    <h3>📊 Résultats de recherche:</h3>
+                    <ul>
+                        <% results.forEach(user => { %>
+                            <li>• <%= user.username %> (<%= user.email %>)</li>
+                        <% }); %>
+                    </ul>
+                </div>
+            <% } else if (results && results.length === 0) { %>
+                <p class="no-results">Aucun résultat trouvé.</p>
+            <% } %>
+
+            <% if (error) { %>
+                <div class="error-display">
+                    <strong>Erreur SQL exposée:</strong>
+                    <pre><%= error %></pre>
+                </div>
+            <% } %>
+        </div>
+
+        <div class="card">
+            <h2>🛠️ Outils suggérés</h2>
+            <div class="code-block">
+                <pre>sqlmap -u "http://localhost:3000/challenge4/search" --data="search=test" --dump</pre>
+                <pre>sqlmap --forms --dump --batch</pre>
+                <pre>Techniques UNION SELECT manuelles</pre>
+            </div>
+            <p class="info-text">
+                💡 Le flag est stocké dans une table séparée nommée <code>flags_table</code>
+            </p>
+        </div>
+
+        <div class="card hints">
+            <h2>💡 Indices</h2>
+            <ul>
+                <li>• Le flag est dans une table séparée</li>
+                <li>• Utilisez UNION SELECT pour extraire des données</li>
+                <li>• sqlmap peut automatiser l'exploitation</li>
+                <li>• Explorez toutes les tables de la base</li>
+                <li>• Payload exemple: <code>' UNION SELECT flag_value, 'admin', 'admin@hack.com' FROM flags_table WHERE '1'='1</code></li>
+            </ul>
+        </div>
+
+        <div class="back-button">
+            <a href="/" class="btn">← Retour au Dashboard</a>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

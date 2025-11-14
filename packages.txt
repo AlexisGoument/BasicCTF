@@ -1,0 +1,5 @@
+nodejs
+npm
+sqlmap
+dirb
+hydra

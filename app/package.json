@@ -1,0 +1,23 @@
+{
+  "name": "basic_ctf",
+  "version": "2.0.0",
+  "description": "CTF Security Challenge - Node.js Application with intentional vulnerabilities for educational purposes",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": ["ctf", "security", "education", "vulnerabilities"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ejs": "^3.1.9",
+    "sqlite3": "^5.1.6",
+    "body-parser": "^1.20.2",
+    "cookie-parser": "^1.4.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

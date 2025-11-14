@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration Panel</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/">Dashboard</a> / <a href="/challenge2">Challenge 2</a> / Admin
+        </div>
+
+        <div class="card admin-panel">
+            <h1>🔐 Administration Panel</h1>
+            
+            <p>
+                Vous avez découvert le panneau d'administration caché. Félicitations !
+            </p>
+
+            <div class="flag-display">
+                <h2>🏆 FLAG</h2>
+                <code><%= flag %></code>
+            </div>
+
+            <p class="info-text">
+                Cette page était supposée être cachée et inaccessible aux utilisateurs normaux.
+                L'absence de contrôles d'accès et la découverte par énumération constituent 
+                une vulnérabilité de sécurité majeure.
+            </p>
+        </div>
+
+        <div class="back-button">
+            <a href="/" class="btn">← Retour au Dashboard</a>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+</body>
+</html>
