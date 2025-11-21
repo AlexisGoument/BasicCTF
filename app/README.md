@@ -41,11 +41,6 @@ npm install
 npm start
 ```
 
-### Mode développement (avec auto-reload)
-```bash
-npm run dev
-```
-
 L'application sera accessible sur **http://localhost:3000**
 
 ## 📊 Structure du Projet
@@ -77,18 +72,18 @@ L'application sera accessible sur **http://localhost:3000**
 ## 🏆 Guide des Challenges
 
 ### Challenge 1 - IDOR
-- **Objectif** : Accéder au document admin (ID 0)
+- **Objectif** : Accéder au document admin
 - **Méthode** : Modifier l'ID dans l'URL `/challenge1/doc/:id`
 - **Points** : 100
 
 ### Challenge 2 - Path Traversal
-- **Objectif** : Découvrir le répertoire `/challenge2/admin` caché
+- **Objectif** : Découvrir le répertoire caché
 - **Méthode** : Énumération avec dirb/gobuster ou test manuel
 - **Points** : 100
 
 ### Challenge 3 - SQL Injection
 - **Objectif** : Contourner l'authentification
-- **Méthode** : Injection SQL classique (`admin' --` ou `' OR '1'='1' --`)
+- **Méthode** : Injection SQL classique
 - **Points** : 100
 
 ### Challenge 4 - SQL Injection Avancé
@@ -98,17 +93,17 @@ L'application sera accessible sur **http://localhost:3000**
 
 ### Challenge 5 - Broken Authentication
 - **Objectif** : Se connecter avec les bons identifiants
-- **Méthode** : Observer les messages d'erreur et cookies (admin/0123456789)
+- **Méthode** : Observer les messages d'erreur
 - **Points** : 100
 
 ### Challenge 6 - XSS
 - **Objectif** : Récupérer le flag dans les cookies
-- **Méthode** : Injection de `<script>alert(document.cookie)</script>`
+- **Méthode** : Injection de javascript
 - **Points** : 100
 
 ### Challenge 7 - Git Secrets
 - **Objectif** : Trouver le flag dans l'historique Git
-- **Méthode** : `git log`, `gitleaks`, ou `git log -p --all | grep CTF`
+- **Méthode** : `git log`, `gitleaks`
 - **Points** : 100
 
 ## 🛠️ Outils Recommandés
