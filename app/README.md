@@ -93,7 +93,7 @@ L'application sera accessible sur **http://localhost:3000**
 
 ### Challenge 5 - Broken Authentication
 - **Objectif** : Se connecter avec les bons identifiants
-- **Méthode** : Observer les messages d'erreur
+- **Méthode** : Observer les messages d'erreur et utiliser hydra
 - **Points** : 100
 
 ### Challenge 6 - XSS
@@ -112,7 +112,7 @@ L'application sera accessible sur **http://localhost:3000**
 - **SQLMap** - Exploitation SQL automatisée
 - **dirb / gobuster** - Énumération de répertoires
 - **gitleaks / truffleHog** - Détection de secrets Git
-- **DevTools** - Inspection du navigateur
+- **hydra** - Attaque par dictionnaire
 
 ## 🎨 Fonctionnalités
 
