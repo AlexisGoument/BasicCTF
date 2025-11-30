@@ -18,6 +18,48 @@
             </div>
         </div>
 
+        <!-- Leaderboard -->
+        <div class="card leaderboard">
+            <h2>🏅 Classement</h2>
+            <div class="leaderboard-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Rang</th>
+                            <th>Utilisateur</th>
+                            <th>Points</th>
+                            <th>Challenges</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% leaderboard.forEach((user, index) => { %>
+                            <tr class="<%= user.isCurrentUser ? 'current-user' : '' %>">
+                                <td class="rank">
+                                    <% if (index === 0) { %>
+                                        🥇
+                                    <% } else if (index === 1) { %>
+                                        🥈
+                                    <% } else if (index === 2) { %>
+                                        🥉
+                                    <% } else { %>
+                                        <%= index + 1 %>
+                                    <% } %>
+                                </td>
+                                <td class="username">
+                                    <%= user.username %>
+                                    <% if (user.isCurrentUser) { %>
+                                        <span class="badge">Vous</span>
+                                    <% } %>
+                                </td>
+                                <td class="points"><%= user.totalPoints %> pts</td>
+                                <td class="completed"><%= user.completedCount %>/7</td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Zone de validation des flags -->
         <div class="card flag-validation">
             <h2>🔑 Validation des Flags</h2>

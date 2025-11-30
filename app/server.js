@@ -143,6 +143,28 @@ app.post('/register', (req, res) => {
 app.get('/', (req, res) => {
     const progress = req.userProgress;
     
+    // Charger tous les utilisateurs pour le leaderboard
+    const allUsers = progressManager.loadAllUsers();
+    
+    // Calculer le nombre de challenges complétés pour chaque utilisateur
+    const leaderboard = allUsers.map(user => {
+        const completedCount = user.progress.split('').filter(c => c === '1').length;
+        return {
+            username: user.username,
+            totalPoints: user.totalPoints,
+            completedCount: completedCount,
+            isCurrentUser: user.username === req.username
+        };
+    });
+    
+    // Trier par points décroissants, puis par nombre de challenges
+    leaderboard.sort((a, b) => {
+        if (b.totalPoints !== a.totalPoints) {
+            return b.totalPoints - a.totalPoints;
+        }
+        return b.completedCount - a.completedCount;
+    });
+    
     // Convertir "1010000" en tableau [1, 3]
     const foundFlags = [];
     for (let i = 0; i < progress.progress.length; i++) {
@@ -172,6 +194,7 @@ app.get('/', (req, res) => {
         foundFlags: foundFlags,
         totalPoints: progress.totalPoints,
         challenges: challenges,
+        leaderboard: leaderboard,
         message: null
     });
 });
@@ -231,12 +254,35 @@ app.post('/validate-flag', (req, res) => {
     challenges.forEach(c => {
         c.status = foundFlags.includes(c.id) ? 'completed' : 'pending';
     });
+    
+    // Charger tous les utilisateurs pour le leaderboard
+    const allUsers = progressManager.loadAllUsers();
+    
+    // Calculer le nombre de challenges complétés pour chaque utilisateur
+    const leaderboard = allUsers.map(user => {
+        const completedCount = user.progress.split('').filter(c => c === '1').length;
+        return {
+            username: user.username,
+            totalPoints: user.totalPoints,
+            completedCount: completedCount,
+            isCurrentUser: user.username === req.username
+        };
+    });
+    
+    // Trier par points décroissants, puis par nombre de challenges
+    leaderboard.sort((a, b) => {
+        if (b.totalPoints !== a.totalPoints) {
+            return b.totalPoints - a.totalPoints;
+        }
+        return b.completedCount - a.completedCount;
+    });
 
     res.render('index', {
         username: req.username,
         foundFlags: foundFlags,
         totalPoints: newProgress.totalPoints,
         challenges: challenges,
+        leaderboard: leaderboard,
         message: message
     });
 });
