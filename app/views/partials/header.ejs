@@ -13,5 +13,10 @@
             <li><a href="/challenge6">Challenge 6</a></li>
             <li><a href="/challenge7">Challenge 7</a></li>
         </ul>
+        <% if (typeof username !== 'undefined') { %>
+        <div class="user-info">
+            👤 <strong><%= username %></strong>
+        </div>
+        <% } %>
     </nav>
 </header>

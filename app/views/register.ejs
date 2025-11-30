@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription - CTF Security Challenge</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container register-container">
+        <div class="register-card">
+            <h1>🏆 CTF Security Challenge</h1>
+            <p class="subtitle">Bienvenue ! Choisissez votre nom d'utilisateur pour commencer</p>
+
+            <% if (error) { %>
+                <div class="message error">
+                    <%= error %>
+                </div>
+            <% } %>
+
+            <form action="/register" method="POST" class="register-form">
+                <div class="form-group">
+                    <label for="username">Nom d'utilisateur:</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        placeholder="Votre nom d'utilisateur"
+                        pattern="[a-zA-Z0-9_-]{3,20}"
+                        title="3 à 20 caractères : lettres, chiffres, _ et - uniquement"
+                        required
+                        autofocus
+                    >
+                </div>
+
+                <button type="submit" class="btn">Commencer le challenge</button>
+            </form>
+
+            <div class="card hints register-rules">
+                <h3>📋 Règles pour le nom d'utilisateur</h3>
+                <ul>
+                    <li>Entre 3 et 20 caractères</li>
+                    <li>Lettres (a-z, A-Z), chiffres (0-9)</li>
+                    <li>Caractères spéciaux autorisés : _ (underscore) et - (tiret)</li>
+                    <li>Le nom doit être unique</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

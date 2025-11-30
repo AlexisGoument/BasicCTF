@@ -5,6 +5,9 @@ const sqlite3 = require('sqlite3').verbose();
 const crypto = require('crypto');
 const path = require('path');
 
+const progressManager = require('./utils/progressManager');
+const { requireUser } = require('./middleware/auth');
+
 const app = express();
 const PORT = 3000;
 
@@ -15,6 +18,12 @@ app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser());
+
+// Initialiser le système de progression
+progressManager.initCSV();
+
+// Middleware d'authentification (sauf pour /register)
+app.use(requireUser);
 
 // Génération des flags au runtime
 const SESSION_UID = crypto.randomBytes(8).toString('hex');
@@ -27,21 +36,6 @@ const CHALLENGE_FLAGS = {
     5: `CTF{broken_auth_${SESSION_UID}}`,
     6: `CTF{xss_exploit_${SESSION_UID}}`,
     7: Buffer.from('Q1RGe2dpdF9zZWNyZXRzX2V4cG9zZWRfaW5faGlzdG9yeX0=', 'base64').toString('utf-8')
-};
-
-// État global du serveur (sans authentification)
-let serverState = {
-    foundFlags: [],
-    totalPoints: 0,
-    challenges: [
-        { id: 1, name: 'Insecure Direct Object Reference', status: 'pending', points: 100 },
-        { id: 2, name: 'Path Traversal', status: 'pending', points: 100 },
-        { id: 3, name: 'SQL Injection', status: 'pending', points: 100 },
-        { id: 4, name: 'SQL Injection Avancé', status: 'pending', points: 100 },
-        { id: 5, name: 'Broken Authentication', status: 'pending', points: 100 },
-        { id: 6, name: 'Cross-Site Scripting', status: 'pending', points: 100 },
-        { id: 7, name: 'Git Secrets & Version Control Security', status: 'pending', points: 100 }
-    ]
 };
 
 // Commentaires stockés en mémoire pour Challenge 6
@@ -103,12 +97,81 @@ function initDatabase() {
 
 // ==================== ROUTES ====================
 
+// ==================== INSCRIPTION ====================
+
+app.get('/register', (req, res) => {
+    res.render('register', { error: null });
+});
+
+app.post('/register', (req, res) => {
+    const { username } = req.body;
+    
+    // Validation du format
+    const usernameRegex = /^[a-zA-Z0-9_-]{3,20}$/;
+    if (!usernameRegex.test(username)) {
+        return res.render('register', {
+            error: 'Le nom doit contenir entre 3 et 20 caractères (lettres, chiffres, _ et - uniquement)'
+        });
+    }
+    
+    // Vérifier l'unicité
+    if (progressManager.userExists(username)) {
+        return res.render('register', {
+            error: 'Ce nom d\'utilisateur existe déjà, choisissez-en un autre'
+        });
+    }
+    
+    // Créer l'utilisateur
+    progressManager.createUser(username);
+    
+    // Créer le cookie encodé en base64
+    const encodedUsername = Buffer.from(username).toString('base64');
+    res.cookie('ctf_username', encodedUsername, {
+        maxAge: 7 * 24 * 60 * 60 * 1000,  // 7 jours
+        httpOnly: false,                   // Volontairement vulnérable
+        secure: false,                     // Pas de HTTPS requis
+        sameSite: 'lax'
+    });
+    
+    // Rediriger vers l'accueil
+    res.redirect('/');
+});
+
+// ==================== DASHBOARD ====================
+
 // Page d'accueil avec dashboard
 app.get('/', (req, res) => {
+    const progress = req.userProgress;
+    
+    // Convertir "1010000" en tableau [1, 3]
+    const foundFlags = [];
+    for (let i = 0; i < progress.progress.length; i++) {
+        if (progress.progress[i] === '1') {
+            foundFlags.push(i + 1);
+        }
+    }
+    
+    // Liste des challenges
+    const challenges = [
+        { id: 1, name: 'Insecure Direct Object Reference', status: 'pending', points: 100 },
+        { id: 2, name: 'Path Traversal', status: 'pending', points: 100 },
+        { id: 3, name: 'SQL Injection', status: 'pending', points: 100 },
+        { id: 4, name: 'SQL Injection Avancé', status: 'pending', points: 100 },
+        { id: 5, name: 'Broken Authentication', status: 'pending', points: 100 },
+        { id: 6, name: 'Cross-Site Scripting', status: 'pending', points: 100 },
+        { id: 7, name: 'Git Secrets & Version Control Security', status: 'pending', points: 100 }
+    ];
+    
+    // Mettre à jour les statuts des challenges
+    challenges.forEach(c => {
+        c.status = foundFlags.includes(c.id) ? 'completed' : 'pending';
+    });
+    
     res.render('index', {
-        foundFlags: serverState.foundFlags,
-        totalPoints: serverState.totalPoints,
-        challenges: serverState.challenges,
+        username: req.username,
+        foundFlags: foundFlags,
+        totalPoints: progress.totalPoints,
+        challenges: challenges,
         message: null
     });
 });
@@ -116,34 +179,64 @@ app.get('/', (req, res) => {
 // Validation des flags
 app.post('/validate-flag', (req, res) => {
     const { flag } = req.body;
+    const username = req.username;
     let message = { type: 'error', text: 'Flag incorrect !' };
 
     // Vérifier si le flag correspond à un challenge
-    for (let challengeId in CHALLENGE_FLAGS) {
-        if (CHALLENGE_FLAGS[challengeId] === flag) {
-            // Vérifier si le flag n'a pas déjà été trouvé
-            if (!serverState.foundFlags.includes(parseInt(challengeId))) {
-                serverState.foundFlags.push(parseInt(challengeId));
-                serverState.totalPoints += 100;
-                
-                // Mettre à jour le statut du challenge
-                const challenge = serverState.challenges.find(c => c.id === parseInt(challengeId));
-                if (challenge) {
-                    challenge.status = 'completed';
-                }
-
-                message = { type: 'success', text: `Flag correct ! +100 points - Challenge ${challengeId} complété !` };
-            } else {
-                message = { type: 'info', text: 'Vous avez déjà validé ce flag !' };
-            }
+    let challengeId = null;
+    for (let id in CHALLENGE_FLAGS) {
+        if (CHALLENGE_FLAGS[id] === flag) {
+            challengeId = parseInt(id);
             break;
         }
     }
+    
+    if (challengeId) {
+        // Vérifier si le flag n'a pas déjà été trouvé
+        const progress = progressManager.getUserProgress(username);
+        const bitIndex = challengeId - 1;
+        
+        if (progress.progress[bitIndex] === '1') {
+            message = { type: 'info', text: 'Vous avez déjà validé ce flag !' };
+        } else {
+            // Marquer comme complété
+            progressManager.updateProgress(username, bitIndex);
+            message = { type: 'success', text: `Flag correct ! +100 points - Challenge ${challengeId} complété !` };
+        }
+    }
+    
+    // Recharger la progression
+    const newProgress = progressManager.getUserProgress(username);
+    
+    // Convertir "1010000" en tableau [1, 3]
+    const foundFlags = [];
+    for (let i = 0; i < newProgress.progress.length; i++) {
+        if (newProgress.progress[i] === '1') {
+            foundFlags.push(i + 1);
+        }
+    }
+    
+    // Liste des challenges
+    const challenges = [
+        { id: 1, name: 'Insecure Direct Object Reference', status: 'pending', points: 100 },
+        { id: 2, name: 'Path Traversal', status: 'pending', points: 100 },
+        { id: 3, name: 'SQL Injection', status: 'pending', points: 100 },
+        { id: 4, name: 'SQL Injection Avancé', status: 'pending', points: 100 },
+        { id: 5, name: 'Broken Authentication', status: 'pending', points: 100 },
+        { id: 6, name: 'Cross-Site Scripting', status: 'pending', points: 100 },
+        { id: 7, name: 'Git Secrets & Version Control Security', status: 'pending', points: 100 }
+    ];
+    
+    // Mettre à jour les statuts
+    challenges.forEach(c => {
+        c.status = foundFlags.includes(c.id) ? 'completed' : 'pending';
+    });
 
     res.render('index', {
-        foundFlags: serverState.foundFlags,
-        totalPoints: serverState.totalPoints,
-        challenges: serverState.challenges,
+        username: req.username,
+        foundFlags: foundFlags,
+        totalPoints: newProgress.totalPoints,
+        challenges: challenges,
         message: message
     });
 });
@@ -185,7 +278,7 @@ const documents = {
 };
 
 app.get('/challenge1', (req, res) => {
-    res.render('challenge1', { doc: null });
+    res.render('challenge1', { doc: null, username: req.username });
 });
 
 // Route vulnérable IDOR - Pas de vérification d'autorisation
@@ -194,16 +287,16 @@ app.get('/challenge1/doc/:id', (req, res) => {
     const doc = documents[docId];
 
     if (doc) {
-        res.render('challenge1', { doc: doc });
+        res.render('challenge1', { doc: doc, username: req.username });
     } else {
-        res.render('challenge1', { doc: { error: 'Document non trouvé' } });
+        res.render('challenge1', { doc: { error: 'Document non trouvé' }, username: req.username });
     }
 });
 
 // ==================== CHALLENGE 2 - PATH TRAVERSAL ====================
 
 app.get('/challenge2', (req, res) => {
-    res.render('challenge2');
+    res.render('challenge2', { username: req.username });
 });
 
 app.get('/challenge2/public', (req, res) => {
@@ -220,13 +313,13 @@ app.get('/challenge2/help', (req, res) => {
 
 // Route cachée - Découvrable via énumération
 app.get('/challenge2/admin', (req, res) => {
-    res.render('challenge2-admin', { flag: CHALLENGE_FLAGS[2] });
+    res.render('challenge2-admin', { flag: CHALLENGE_FLAGS[2], username: req.username });
 });
 
 // ==================== CHALLENGE 3 - SQL INJECTION ====================
 
 app.get('/challenge3', (req, res) => {
-    res.render('challenge3', { message: null, error: null });
+    res.render('challenge3', { message: null, error: null, username: req.username });
 });
 
 // Route vulnérable SQL Injection - Concaténation directe
@@ -241,7 +334,8 @@ app.post('/challenge3/login', (req, res) => {
             // Exposer les erreurs SQL (vulnérabilité)
             res.render('challenge3', { 
                 message: null, 
-                error: `Erreur SQL: ${err.message}` 
+                error: `Erreur SQL: ${err.message}`,
+                username: req.username
             });
         } else if (row) {
             // Injection SQL réussie
@@ -250,12 +344,14 @@ app.post('/challenge3/login', (req, res) => {
                     type: 'success', 
                     text: `Connexion réussie ! Bienvenue ${row.username}. 🏆 FLAG: ${CHALLENGE_FLAGS[3]}` 
                 }, 
-                error: null 
+                error: null,
+                username: req.username
             });
         } else {
             res.render('challenge3', { 
                 message: { type: 'error', text: 'Identifiants incorrects' }, 
-                error: null 
+                error: null,
+                username: req.username
             });
         }
     });
@@ -264,7 +360,7 @@ app.post('/challenge3/login', (req, res) => {
 // ==================== CHALLENGE 4 - SQL INJECTION AVANCÉ ====================
 
 app.get('/challenge4', (req, res) => {
-    res.render('challenge4', { results: null, error: null });
+    res.render('challenge4', { results: null, error: null, username: req.username });
 });
 
 // Route vulnérable SQL Injection Avancé - Compatible sqlmap
@@ -279,12 +375,14 @@ app.post('/challenge4/search', (req, res) => {
             // Exposer les erreurs SQL (vulnérabilité)
             res.render('challenge4', { 
                 results: null, 
-                error: `Erreur SQL: ${err.message}` 
+                error: `Erreur SQL: ${err.message}`,
+                username: req.username
             });
         } else {
             res.render('challenge4', { 
                 results: rows, 
-                error: null 
+                error: null,
+                username: req.username
             });
         }
     });
@@ -293,7 +391,7 @@ app.post('/challenge4/search', (req, res) => {
 // ==================== CHALLENGE 5 - BROKEN AUTHENTICATION ====================
 
 app.get('/challenge5', (req, res) => {
-    res.render('challenge5', { message: null });
+    res.render('challenge5', { message: null, username: req.username });
 });
 
 // Route avec faiblesses d'authentification
@@ -304,22 +402,21 @@ app.post('/challenge5/login', (req, res) => {
     if (username === 'admin') {
         if (password === '0123456789') {
             // Authentification réussie
-            res.cookie('auth_token', 'admin_token_12345', { httpOnly: false });
-            res.cookie('user_role', 'administrator', { httpOnly: false });
             res.render('challenge5', { 
                 message: { 
                     type: 'success', 
                     text: `Connexion réussie ! 🏆 FLAG: ${CHALLENGE_FLAGS[5]}` 
-                } 
+                },
+                username: req.username
             });
         } else {
             // Message révélateur : l'utilisateur existe
-            res.cookie('debug_info', 'user_exists', { httpOnly: false });
             res.render('challenge5', { 
                 message: { 
                     type: 'error', 
                     text: 'L\'utilisateur admin existe mais le mot de passe est incorrect' 
-                } 
+                },
+                username: req.username
             });
         }
     } else if (username === 'root' || username === 'test') {
@@ -327,14 +424,16 @@ app.post('/challenge5/login', (req, res) => {
             message: { 
                 type: 'error', 
                 text: `L\'utilisateur ${username} n\'a pas les permissions nécessaires` 
-            } 
+            },
+            username: req.username
         });
     } else {
         res.render('challenge5', { 
             message: { 
                 type: 'error', 
                 text: 'Utilisateur inconnu dans le système' 
-            } 
+            },
+            username: req.username
         });
     }
 });
@@ -344,7 +443,7 @@ app.post('/challenge5/login', (req, res) => {
 app.get('/challenge6', (req, res) => {
     // Cookie avec le flag accessible via JavaScript
     res.cookie('flag', CHALLENGE_FLAGS[6], { httpOnly: false });
-    res.render('challenge6', { comments: comments });
+    res.render('challenge6', { comments: comments, username: req.username });
 });
 
 // Route vulnérable XSS - Pas de sanitisation
@@ -355,13 +454,13 @@ app.post('/challenge6/comment', (req, res) => {
     comments.push({ author: author, text: text });
 
     res.cookie('flag', CHALLENGE_FLAGS[6], { httpOnly: false });
-    res.render('challenge6', { comments: comments });
+    res.render('challenge6', { comments: comments, username: req.username });
 });
 
 // ==================== CHALLENGE 7 - GIT SECRETS ====================
 
 app.get('/challenge7', (req, res) => {
-    res.render('challenge7');
+    res.render('challenge7', { username: req.username });
 });
 
 // ==================== DÉMARRAGE DU SERVEUR ====================

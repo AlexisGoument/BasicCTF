@@ -88,6 +88,19 @@ code, pre, .code-block {
     color: var(--accent-primary);
 }
 
+.user-info {
+    color: var(--text-secondary);
+    padding: 0.5rem 1rem;
+    background: var(--bg-secondary);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font-size: 0.9rem;
+}
+
+.user-info strong {
+    color: var(--accent-primary);
+}
+
 /* ========================================
    CONTENEUR PRINCIPAL
    ======================================== */
@@ -684,4 +697,82 @@ code, pre, .code-block {
 
 .btn-spoiler:hover {
     background: #2980b9;
+}
+
+/* ========================================
+   PAGE D'INSCRIPTION (REGISTER)
+   ======================================== */
+.register-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+.register-card {
+    max-width: 500px;
+    width: 100%;
+    background: var(--bg-card);
+    padding: 3rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px var(--shadow);
+    border: 1px solid var(--border);
+}
+
+.register-card h1 {
+    text-align: center;
+    color: var(--accent-primary);
+    margin-bottom: 1rem;
+    font-size: 2.5rem;
+}
+
+.register-card .subtitle {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+}
+
+.register-form {
+    margin-bottom: 2rem;
+}
+
+.register-form .btn {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.1rem;
+    background: var(--accent-primary);
+    color: var(--bg-primary);
+    font-weight: bold;
+}
+
+.register-rules {
+    background: var(--bg-secondary);
+    padding: 1.5rem;
+}
+
+.register-rules h3 {
+    color: var(--accent-secondary);
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.register-rules ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.register-rules li {
+    color: var(--text-secondary);
+    padding: 0.3rem 0;
+    font-size: 0.9rem;
+}
+
+.register-rules li:before {
+    content: "✓ ";
+    color: var(--accent-primary);
+    font-weight: bold;
+    margin-right: 0.5rem;
 }
