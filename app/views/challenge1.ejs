@@ -27,15 +27,6 @@
             </p>
         </div>
 
-        <div class="card">
-            <h2>📄 Documents publics accessibles</h2>
-            <ul class="documents-list">
-                <li>• Document public <a href="/challenge1/doc/1" class="link">[Voir: /challenge1/doc/1]</a></li>
-                <li>• Guide utilisateur <a href="/challenge1/doc/2" class="link">[Voir: /challenge1/doc/2]</a></li>
-                <li>• FAQ générale <a href="/challenge1/doc/3" class="link">[Voir: /challenge1/doc/3]</a></li>
-            </ul>
-        </div>
-
         <% if (doc && !doc.error) { %>
         <div class="card document-view <%= doc.confidential ? 'confidential' : '' %>">
             <h2>📄 <%= doc.title %></h2>
@@ -48,6 +39,15 @@
             <p><%= doc.error %></p>
         </div>
         <% } %>
+
+        <div class="card">
+            <h2>📄 Documents publics accessibles</h2>
+            <ul class="documents-list">
+                <li>• Document public <a href="/challenge1/doc/1" class="link">[Voir: /challenge1/doc/1]</a></li>
+                <li>• Guide utilisateur <a href="/challenge1/doc/2" class="link">[Voir: /challenge1/doc/2]</a></li>
+                <li>• FAQ générale <a href="/challenge1/doc/3" class="link">[Voir: /challenge1/doc/3]</a></li>
+            </ul>
+        </div>
 
         <div class="card hints">
             <h2>💡 Indices</h2>
