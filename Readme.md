@@ -16,7 +16,7 @@ sudo docker build -t basic-ctf:latest .
 
 Pour démarrer le container
 ```bash
-docker run --rm -it \
+sudo docker run --rm -it \
   -p 3000:3000 \
   basic-ctf:latest \
   bash
