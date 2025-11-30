@@ -52,9 +52,27 @@
         <div class="card hints">
             <h2>💡 Indices</h2>
             <ul>
-                <li>• Testez différents IDs dans l'URL</li>
-                <li>• Les IDs sont prévisibles (incrémentation simple)</li>
-                <li>• Essayez avec des valeurs comme 0, 4, 5...</li>
+                <li>
+                    Indice 1: 
+                    <span class="spoiler">
+                        <button class="btn-spoiler" onclick="this.nextElementSibling.classList.remove('hidden'); this.style.display='none'">👁️ Voir</button>
+                        <span class="spoiler-content hidden">Testez différents IDs dans l'URL</span>
+                    </span>
+                </li>
+                <li>
+                    Indice 2: 
+                    <span class="spoiler">
+                        <button class="btn-spoiler" onclick="this.nextElementSibling.classList.remove('hidden'); this.style.display='none'">👁️ Voir</button>
+                        <span class="spoiler-content hidden">Les IDs sont prévisibles (incrémentation simple)</span>
+                    </span>
+                </li>
+                <li>
+                    Indice 3: 
+                    <span class="spoiler">
+                        <button class="btn-spoiler" onclick="this.nextElementSibling.classList.remove('hidden'); this.style.display='none'">👁️ Voir</button>
+                        <span class="spoiler-content hidden">Essayez avec des valeurs comme 0, 4, 5...</span>
+                    </span>
+                </li>
             </ul>
         </div>
 

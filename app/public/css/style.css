@@ -659,3 +659,29 @@ code, pre, .code-block {
 .challenge-item {
     animation: fadeIn 0.3s ease-out;
 }
+
+/* ========================================
+   SPOILER BUTTONS (pour les indices)
+   ======================================== */
+.spoiler {
+    display: inline-block;
+}
+
+.spoiler-content.hidden {
+    display: none;
+}
+
+.btn-spoiler {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+    transition: background 0.3s;
+}
+
+.btn-spoiler:hover {
+    background: #2980b9;
+}
