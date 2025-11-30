@@ -34,13 +34,53 @@
         <div class="card hints">
             <h2>💡 Indices</h2>
             <ul>
-                <li>• Les secrets ne sont pas toujours dans le code actuel mais peuvent être dans l'historique</li>
-                <li>• Inspectez les commits précédents</li>
-                <li>• Utilisez des outils de détection de secrets (gitleaks, truffleHog)</li>
-                <li>• Vérifiez les fichiers de configuration qui ont été supprimés</li>
-                <li>• Cherchez des fichiers comme .env, config.js, database.js dans l'historique</li>
+                <li>Les secrets ne sont pas toujours dans le code actuel mais peuvent être dans l'historique</li>
+                <li>
+                    Indice 1: 
+                    <span class="spoiler">
+                        <button class="btn-spoiler" onclick="this.nextElementSibling.classList.remove('hidden'); this.style.display='none'">👁️ Voir</button>
+                        <span class="spoiler-content hidden">Inspectez les commits précédents</span>
+                    </span>
+                </li>
+                <li>
+                    Indice 2: 
+                    <span class="spoiler">
+                        <button class="btn-spoiler" onclick="this.nextElementSibling.classList.remove('hidden'); this.style.display='none'">👁️ Voir</button>
+                        <span class="spoiler-content hidden">Utilisez des outils de détection de secrets (gitleaks avec <code>--config .gitleaks.toml</code>) ou bien manuellement via <code>git log -p --all</code></span>
+                    </span>
+                </li>
+                <li>
+                    Indice 3: 
+                    <span class="spoiler">
+                        <button class="btn-spoiler" onclick="this.nextElementSibling.classList.remove('hidden'); this.style.display='none'">👁️ Voir</button>
+                        <span class="spoiler-content hidden">Vérifiez les fichiers de configuration qui ont été supprimés</span>
+                    </span>
+                </li>
+                <li>
+                    Indice 4: 
+                    <span class="spoiler">
+                        <button class="btn-spoiler" onclick="this.nextElementSibling.classList.remove('hidden'); this.style.display='none'">👁️ Voir</button>
+                        <span class="spoiler-content hidden">Cherchez des fichiers comme .env, config.js, database.js dans l'historique</span>
+                    </span>
+                </li>
             </ul>
         </div>
+
+        <style>
+            .spoiler { display: inline-block; }
+            .spoiler-content.hidden { display: none; }
+            .btn-spoiler {
+                background: #3498db;
+                color: white;
+                border: none;
+                padding: 4px 10px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 0.85em;
+                transition: background 0.3s;
+            }
+            .btn-spoiler:hover { background: #2980b9; }
+        </style>
 
         <div class="back-button">
             <a href="/" class="btn">← Retour au Dashboard</a>
