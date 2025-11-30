@@ -1,0 +1,13 @@
+title = "Gitleaks Configuration for CTF"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "ctf-flag"
+description = "Detected CTF flag"
+regex = '''CTF\{[a-zA-Z0-9_]+\}'''
+tags = ["ctf", "flag", "secret"]
+[[rules.Entropies]]
+Min = "3.0"
+Max = "8.0"
