@@ -48,7 +48,7 @@
                 <% comments.forEach(comment => { %>
                     <div class="comment">
                         <strong>👤 <%= comment.author %>:</strong>
-                        <!-- VULNÉRABLE: Utilisation de <%- au lieu de <%= pour ne pas échapper le HTML -->
+                        <!-- VULNERABLE: Utilisation de balises non-echappees pour ne pas echapper le HTML -->
                         <span><%- comment.text %></span>
                     </div>
                 <% }); %>
