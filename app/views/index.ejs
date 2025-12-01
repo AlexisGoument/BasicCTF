@@ -14,7 +14,7 @@
             <h1>🏆 CTF Security Challenge</h1>
             <div class="score-info">
                 <span class="score">Score: <%= totalPoints %> points</span>
-                <span class="progress"><%= foundFlags.length %>/7 challenges terminés</span>
+                <span class="progress"><%= foundFlags.length %>/8 challenges terminés</span>
             </div>
         </div>
 
@@ -52,7 +52,7 @@
                                     <% } %>
                                 </td>
                                 <td class="points"><%= user.totalPoints %> pts</td>
-                                <td class="completed"><%= user.completedCount %>/7</td>
+                                <td class="completed"><%= user.completedCount %>/8</td>
                             </tr>
                         <% }); %>
                     </tbody>
@@ -78,7 +78,7 @@
         <!-- Liste des challenges -->
         <div class="card challenges-list">
             <h2>📋 Challenges</h2>
-            <p class="subtitle">Difficulté: Facile (tous les challenges valent 100 points)</p>
+            <p class="subtitle">Tous les challenges valent 100 points</p>
             
             <div class="challenges">
                 <% challenges.forEach(challenge => { %>

@@ -3,3 +3,4 @@ database.db
 *.log
 .DS_Store
 app/data/progress.csv
+specs/challenge8_doc.md

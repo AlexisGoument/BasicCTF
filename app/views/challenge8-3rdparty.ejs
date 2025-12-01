@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Third Party Services</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/">Dashboard</a> / <a href="/challenge8">Challenge 8</a> / 3rdparty
+        </div>
+
+        <div class="card admin-panel">
+            <h1>🔐 Third Party Services</h1>
+            
+            <p>
+                Vous avez réussi à découvrir l'endpoint des services tiers. Excellent travail !
+            </p>
+
+            <div class="flag-display">
+                <h2>🏆 FLAG</h2>
+                <code><%= flag %></code>
+            </div>
+
+            <p class="info-text">
+                Cet endpoint était destiné à héberger des intégrations avec des services externes
+                et n'aurait jamais dû être exposé publiquement. L'énumération systématique des 
+                répertoires a permis de découvrir cette vulnérabilité de configuration.
+            </p>
+
+            <div class="card" style="margin-top: 20px; background: #2d3748;">
+                <h3>📊 Analyse de la vulnérabilité</h3>
+                <ul style="list-style-type: disc; padding-left: 20px;">
+                    <li>Type : Exposition de répertoire sensible</li>
+                    <li>Sévérité : Élevée</li>
+                    <li>Impact : Accès non autorisé aux informations sensibles</li>
+                    <li>Mitigation : Authentification requise + Liste blanche d'endpoints</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="back-button">
+            <a href="/" class="btn">← Retour au Dashboard</a>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

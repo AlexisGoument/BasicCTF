@@ -35,7 +35,8 @@ const CHALLENGE_FLAGS = {
     4: `CTF{sql_data_extract_${SESSION_UID}}`,
     5: `CTF{broken_auth_${SESSION_UID}}`,
     6: `CTF{xss_exploit_${SESSION_UID}}`,
-    7: Buffer.from('Q1RGe2dpdF9zZWNyZXRzX2V4cG9zZWRfaW5faGlzdG9yeX0=', 'base64').toString('utf-8')
+    7: Buffer.from('Q1RGe2dpdF9zZWNyZXRzX2V4cG9zZWRfaW5faGlzdG9yeX0=', 'base64').toString('utf-8'),
+    8: `CTF{advanced_enumeration_${SESSION_UID}}`
 };
 
 // Commentaires stockés en mémoire pour Challenge 6
@@ -181,7 +182,8 @@ app.get('/', (req, res) => {
         { id: 4, name: 'SQL Injection Avancé', status: 'pending', points: 100 },
         { id: 5, name: 'Broken Authentication', status: 'pending', points: 100 },
         { id: 6, name: 'Cross-Site Scripting', status: 'pending', points: 100 },
-        { id: 7, name: 'Git Secrets & Version Control Security', status: 'pending', points: 100 }
+        { id: 7, name: 'Git Secrets & Version Control Security', status: 'pending', points: 100 },
+        { id: 8, name: 'Advanced Path Enumeration', status: 'pending', points: 100 }
     ];
     
     // Mettre à jour les statuts des challenges
@@ -247,7 +249,8 @@ app.post('/validate-flag', (req, res) => {
         { id: 4, name: 'SQL Injection Avancé', status: 'pending', points: 100 },
         { id: 5, name: 'Broken Authentication', status: 'pending', points: 100 },
         { id: 6, name: 'Cross-Site Scripting', status: 'pending', points: 100 },
-        { id: 7, name: 'Git Secrets & Version Control Security', status: 'pending', points: 100 }
+        { id: 7, name: 'Git Secrets & Version Control Security', status: 'pending', points: 100 },
+        { id: 8, name: 'Advanced Path Enumeration', status: 'pending', points: 100 }
     ];
     
     // Mettre à jour les statuts
@@ -507,6 +510,29 @@ app.post('/challenge6/comment', (req, res) => {
 
 app.get('/challenge7', (req, res) => {
     res.render('challenge7', { username: req.username });
+});
+
+// ==================== CHALLENGE 8 - ADVANCED PATH ENUMERATION ====================
+
+app.get('/challenge8', (req, res) => {
+    res.render('challenge8', { username: req.username });
+});
+
+app.get('/challenge8/api', (req, res) => {
+    res.send('<h1>API Endpoint</h1><p>API documentation...</p>');
+});
+
+app.get('/challenge8/assets', (req, res) => {
+    res.send('<h1>Assets Directory</h1><p>Static assets...</p>');
+});
+
+app.get('/challenge8/files', (req, res) => {
+    res.send('<h1>Files Directory</h1><p>File storage...</p>');
+});
+
+// Route cachée - Découvrable via énumération avancée
+app.get('/challenge8/3rdparty', (req, res) => {
+    res.render('challenge8-3rdparty', { flag: CHALLENGE_FLAGS[8], username: req.username });
 });
 
 // ==================== DÉMARRAGE DU SERVEUR ====================
