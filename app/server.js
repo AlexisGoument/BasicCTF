@@ -38,7 +38,8 @@ const CHALLENGE_FLAGS = {
     7: Buffer.from('Q1RGe2dpdF9zZWNyZXRzX2V4cG9zZWRfaW5faGlzdG9yeX0=', 'base64').toString('utf-8'),
     8: `CTF{advanced_enumeration_${SESSION_UID}}`,
     9: `CTF{sql_full_database_dump_${SESSION_UID}}`,
-    10: `CTF{dictionary_attack_master_${SESSION_UID}}`
+    10: `CTF{dictionary_attack_master_${SESSION_UID}}`,
+    11: Buffer.from('Q1RGe2NvcmluZ2FfZG9fYmVjb30=', 'base64').toString('utf-8')
 };
 
 // Commentaires stockés en mémoire pour Challenge 6
@@ -203,7 +204,8 @@ app.get('/', (req, res) => {
         { id: 7, name: 'Git Secrets & Version Control Security', status: 'pending', points: 100 },
         { id: 8, name: 'Advanced Path Enumeration', status: 'pending', points: 100 },
         { id: 9, name: 'SQL Injection Expert', status: 'pending', points: 100 },
-        { id: 10, name: 'Dictionary Attack Expert', status: 'pending', points: 100 }
+        { id: 10, name: 'Dictionary Attack Expert', status: 'pending', points: 100 },
+        { id: 11, name: 'OSINT - Geolocation', status: 'pending', points: 100 }
     ];
     
     // Mettre à jour les statuts des challenges
@@ -272,7 +274,8 @@ app.post('/validate-flag', (req, res) => {
         { id: 7, name: 'Git Secrets & Version Control Security', status: 'pending', points: 100 },
         { id: 8, name: 'Advanced Path Enumeration', status: 'pending', points: 100 },
         { id: 9, name: 'SQL Injection Expert', status: 'pending', points: 100 },
-        { id: 10, name: 'Dictionary Attack Expert', status: 'pending', points: 100 }
+        { id: 10, name: 'Dictionary Attack Expert', status: 'pending', points: 100 },
+        { id: 11, name: 'OSINT - Geolocation', status: 'pending', points: 100 }
     ];
     
     // Mettre à jour les statuts
@@ -640,6 +643,12 @@ app.post('/challenge10/login', (req, res) => {
             username: req.username
         });
     }
+});
+
+// ==================== CHALLENGE 11 - OSINT GEOLOCATION ====================
+
+app.get('/challenge11', (req, res) => {
+    res.render('challenge11', { username: req.username });
 });
 
 // ==================== DÉMARRAGE DU SERVEUR ====================

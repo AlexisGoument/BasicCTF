@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Challenge 11 - OSINT Geolocation</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/">Dashboard</a> / Challenge 11
+        </div>
+
+        <div class="challenge-header">
+            <h1>🔍 Challenge 11 - OSINT Geolocation</h1>
+            <p class="subtitle">Investigation cybercriminelle</p>
+        </div>
+
+        <div class="card">
+            <h2>📋 Briefing</h2>
+            <p>
+                <strong>Contexte :</strong> Un suspect dans une affaire de cybercriminalité a publié cette photo 
+                sur les réseaux sociaux avant de supprimer son compte. Nos équipes techniques ont récupéré l'image, 
+                mais toutes les métadonnées EXIF ont été nettoyées.
+            </p>
+            <p>
+                <strong>Mission :</strong> Vous devez identifier le nom exact de ce restaurant pour poursuivre l'enquête. 
+                Des indices visuels sont présents dans l'image, mais aucune géolocalisation directe n'est disponible.
+            </p>
+            <p>
+                <strong>Objectif :</strong> Retrouver le nom du restaurant et valider le flag au format : 
+                <code>CTF{nom_du_restaurant}</code>
+            </p>
+            <p class="info-text">
+                ⚠️ Le nom doit être en minuscules, avec les espaces remplacés par des underscores (_)
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>📸 Photo interceptée</h2>
+            <div style="text-align: center; margin: 20px 0;">
+                <img src="/images/restaurant.png" alt="Restaurant à identifier" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>⚠️ Niveau de difficulté : Débutant</h2>
+            <p>
+                La réussite dépend de votre capacité à exploiter les indices visuels et à utiliser 
+                efficacement les outils de recherche disponibles.
+            </p>
+        </div>
+
+        <div class="back-button">
+            <a href="/" class="btn">← Retour au Dashboard</a>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+</body>
+</html>
