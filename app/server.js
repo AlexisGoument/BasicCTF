@@ -37,7 +37,8 @@ const CHALLENGE_FLAGS = {
     6: `CTF{xss_exploit_${SESSION_UID}}`,
     7: Buffer.from('Q1RGe2dpdF9zZWNyZXRzX2V4cG9zZWRfaW5faGlzdG9yeX0=', 'base64').toString('utf-8'),
     8: `CTF{advanced_enumeration_${SESSION_UID}}`,
-    9: `CTF{sql_full_database_dump_${SESSION_UID}}`
+    9: `CTF{sql_full_database_dump_${SESSION_UID}}`,
+    10: `CTF{dictionary_attack_master_${SESSION_UID}}`
 };
 
 // Commentaires stockés en mémoire pour Challenge 6
@@ -201,7 +202,8 @@ app.get('/', (req, res) => {
         { id: 6, name: 'Cross-Site Scripting', status: 'pending', points: 100 },
         { id: 7, name: 'Git Secrets & Version Control Security', status: 'pending', points: 100 },
         { id: 8, name: 'Advanced Path Enumeration', status: 'pending', points: 100 },
-        { id: 9, name: 'SQL Injection Expert', status: 'pending', points: 100 }
+        { id: 9, name: 'SQL Injection Expert', status: 'pending', points: 100 },
+        { id: 10, name: 'Dictionary Attack Expert', status: 'pending', points: 100 }
     ];
     
     // Mettre à jour les statuts des challenges
@@ -269,7 +271,8 @@ app.post('/validate-flag', (req, res) => {
         { id: 6, name: 'Cross-Site Scripting', status: 'pending', points: 100 },
         { id: 7, name: 'Git Secrets & Version Control Security', status: 'pending', points: 100 },
         { id: 8, name: 'Advanced Path Enumeration', status: 'pending', points: 100 },
-        { id: 9, name: 'SQL Injection Expert', status: 'pending', points: 100 }
+        { id: 9, name: 'SQL Injection Expert', status: 'pending', points: 100 },
+        { id: 10, name: 'Dictionary Attack Expert', status: 'pending', points: 100 }
     ];
     
     // Mettre à jour les statuts
@@ -591,6 +594,52 @@ app.get('/challenge9/search', (req, res) => {
             });
         }
     });
+});
+
+// ==================== CHALLENGE 10 - DICTIONARY ATTACK EXPERT ====================
+
+app.get('/challenge10', (req, res) => {
+    res.render('challenge10', { message: null, username: req.username });
+});
+
+// Route avec authentification vulnérable - Nécessite rockyou.txt
+app.post('/challenge10/login', (req, res) => {
+    const { username, password } = req.body;
+
+    const validUsername = Buffer.from('c3Vuc2hpbmU=', 'base64').toString('utf-8');
+    const validPassword = Buffer.from('YnV0dGVyZmx5', 'base64').toString('utf-8');
+    
+    // Messages d'erreur révélateurs pour faciliter l'attaque par dictionnaire
+    if (username === validUsername) {
+        if (password === validPassword) {
+            // Authentification réussie
+            res.render('challenge10', { 
+                message: { 
+                    type: 'success', 
+                    text: `Connexion réussie ! 🏆 FLAG: ${CHALLENGE_FLAGS[10]}` 
+                },
+                username: req.username
+            });
+        } else {
+            // Message révélateur : l'utilisateur existe mais mauvais mot de passe
+            res.render('challenge10', { 
+                message: { 
+                    type: 'error', 
+                    text: 'Nom d\'utilisateur correct mais mot de passe incorrect' 
+                },
+                username: req.username
+            });
+        }
+    } else {
+        // Utilisateur n'existe pas
+        res.render('challenge10', { 
+            message: { 
+                type: 'error', 
+                text: 'Nom d\'utilisateur inconnu' 
+            },
+            username: req.username
+        });
+    }
 });
 
 // ==================== DÉMARRAGE DU SERVEUR ====================

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Challenge 10 - Dictionary Attack Expert</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/">Dashboard</a> / Challenge 10
+        </div>
+
+        <div class="challenge-header">
+            <h1>🔐 Challenge 10 - Dictionary Attack Expert</h1>
+            <p class="subtitle">Cassez les identifiants par attaque de dictionnaire</p>
+        </div>
+
+        <div class="card">
+            <h2>📚 Description</h2>
+            <p>
+                Cette application possède un compte utilisateur avec des identifiants faibles.
+                Vous devrez mener une attaque par dictionnaire pour trouver à la fois le nom d'utilisateur
+                et le mot de passe. Aucun indice ne sera fourni.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>🔑 Connexion</h2>
+            <form action="/challenge10/login" method="POST" class="login-form">
+                <div class="form-group">
+                    <label for="username">Nom d'utilisateur</label>
+                    <input type="text" id="username" name="username" placeholder="Entrez le nom d'utilisateur" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Mot de passe</label>
+                    <input type="password" id="password" name="password" placeholder="Entrez le mot de passe" required>
+                </div>
+                <button type="submit" class="btn">Se connecter</button>
+            </form>
+
+            <% if (message) { %>
+                <div class="message <%= message.type %>">
+                    <%= message.text %>
+                </div>
+            <% } %>
+        </div>
+
+        <div class="card">
+            <h2>⚠️ Niveau de difficulté : Expert</h2>
+            <p>
+                Ce challenge nécessite l'utilisation d'outils d'attaque par dictionnaire et une wordlist
+                complète.
+            </p>
+        </div>
+
+        <div class="back-button">
+            <a href="/" class="btn">← Retour au Dashboard</a>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

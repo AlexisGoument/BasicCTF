@@ -99,7 +99,7 @@ function createUser(username) {
         // Ajouter le nouvel utilisateur
         const newUser = {
             username,
-            progress: '000000000',  // 9 challenges non complétés
+            progress: '0000000000',  // 10 challenges non complétés
             totalPoints: 0,
             lastUpdate: new Date().toISOString()
         };
@@ -118,7 +118,7 @@ function createUser(username) {
 /**
  * Met à jour la progression d'un utilisateur (marque un challenge comme complété)
  * @param {string} username 
- * @param {number} bitIndex Index du bit (0-8 pour challenges 1-9)
+ * @param {number} bitIndex Index du bit (0-9 pour challenges 1-10)
  * @returns {boolean} True si mise à jour réussie
  */
 function updateProgress(username, bitIndex) {
