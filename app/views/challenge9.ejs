@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Challenge 9 - SQL Injection Expert</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/">Dashboard</a> / Challenge 9
+        </div>
+
+        <div class="challenge-header">
+            <h1>💉 Challenge 9 - SQL Injection Expert</h1>
+            <p class="subtitle">Exploitez la recherche pour extraire toutes les données</p>
+        </div>
+
+        <div class="card">
+            <h2>📚 Description</h2>
+            <p>
+                Cette application contient une vulnérabilité SQL Injection dans sa fonction de recherche par ID.
+                Aucun indice ne sera fourni. Vous devrez explorer la base de données par vous-même
+                pour trouver le flag.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>🔍 Rechercher par ID</h2>
+            <form action="/challenge9/search" method="GET" class="search-form">
+                <div class="form-group">
+                    <input type="text" name="identity" placeholder="Entrez un ID..." required>
+                    <button type="submit" class="btn">Rechercher</button>
+                </div>
+            </form>
+
+            <% if (results && results.length > 0) { %>
+                <div class="search-results">
+                    <h3>📊 Résultats:</h3>
+                    <ul>
+                        <% results.forEach(user => { %>
+                            <li>• ID: <%= user.id %> - <%= user.username %></li>
+                        <% }); %>
+                    </ul>
+                </div>
+            <% } else if (results && results.length === 0) { %>
+                <p class="no-results">Aucun résultat trouvé.</p>
+            <% } %>
+
+            <% if (error) { %>
+                <div class="error-display">
+                    <strong>Erreur:</strong>
+                    <pre><%= error %></pre>
+                </div>
+            <% } %>
+        </div>
+
+        <div class="card">
+            <h2>⚠️ Niveau de difficulté : Expert</h2>
+            <p>
+                Ce challenge nécessite une exploitation SQL avancée. Vous devrez utiliser des outils
+                automatisés pour énumérer et extraire les données de la base. Le flag se trouve
+                quelque part dans la base de données, mais vous devrez le chercher vous-même.
+            </p>
+        </div>
+
+        <div class="back-button">
+            <a href="/" class="btn">← Retour au Dashboard</a>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

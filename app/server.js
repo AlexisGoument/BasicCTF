@@ -36,7 +36,8 @@ const CHALLENGE_FLAGS = {
     5: `CTF{broken_auth_${SESSION_UID}}`,
     6: `CTF{xss_exploit_${SESSION_UID}}`,
     7: Buffer.from('Q1RGe2dpdF9zZWNyZXRzX2V4cG9zZWRfaW5faGlzdG9yeX0=', 'base64').toString('utf-8'),
-    8: `CTF{advanced_enumeration_${SESSION_UID}}`
+    8: `CTF{advanced_enumeration_${SESSION_UID}}`,
+    9: `CTF{sql_full_database_dump_${SESSION_UID}}`
 };
 
 // Commentaires stockés en mémoire pour Challenge 6
@@ -92,6 +93,22 @@ function initDatabase() {
             // Insérer le flag du challenge 4
             db.run(`DELETE FROM flags_table`);
             db.run(`INSERT INTO flags_table (flag_value) VALUES (?)`, [CHALLENGE_FLAGS[4]]);
+        }
+    });
+
+    // Créer la table secret_data pour le challenge 9
+    db.run(`CREATE TABLE IF NOT EXISTS secret_data (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        data_key TEXT NOT NULL,
+        data_value TEXT NOT NULL
+    )`, (err) => {
+        if (err) {
+            console.error('Erreur création table secret_data:', err);
+        } else {
+            // Insérer le flag du challenge 9
+            db.run(`DELETE FROM secret_data`);
+            db.run(`INSERT INTO secret_data (data_key, data_value) VALUES (?, ?)`, 
+                ['master_flag', CHALLENGE_FLAGS[9]]);
         }
     });
 }
@@ -183,7 +200,8 @@ app.get('/', (req, res) => {
         { id: 5, name: 'Broken Authentication', status: 'pending', points: 100 },
         { id: 6, name: 'Cross-Site Scripting', status: 'pending', points: 100 },
         { id: 7, name: 'Git Secrets & Version Control Security', status: 'pending', points: 100 },
-        { id: 8, name: 'Advanced Path Enumeration', status: 'pending', points: 100 }
+        { id: 8, name: 'Advanced Path Enumeration', status: 'pending', points: 100 },
+        { id: 9, name: 'SQL Injection Expert', status: 'pending', points: 100 }
     ];
     
     // Mettre à jour les statuts des challenges
@@ -250,7 +268,8 @@ app.post('/validate-flag', (req, res) => {
         { id: 5, name: 'Broken Authentication', status: 'pending', points: 100 },
         { id: 6, name: 'Cross-Site Scripting', status: 'pending', points: 100 },
         { id: 7, name: 'Git Secrets & Version Control Security', status: 'pending', points: 100 },
-        { id: 8, name: 'Advanced Path Enumeration', status: 'pending', points: 100 }
+        { id: 8, name: 'Advanced Path Enumeration', status: 'pending', points: 100 },
+        { id: 9, name: 'SQL Injection Expert', status: 'pending', points: 100 }
     ];
     
     // Mettre à jour les statuts
@@ -533,6 +552,45 @@ app.get('/challenge8/files', (req, res) => {
 // Route cachée - Découvrable via énumération avancée
 app.get('/challenge8/3rdparty', (req, res) => {
     res.render('challenge8-3rdparty', { flag: CHALLENGE_FLAGS[8], username: req.username });
+});
+
+// ==================== CHALLENGE 9 - SQL INJECTION EXPERT ====================
+
+app.get('/challenge9', (req, res) => {
+    res.render('challenge9', { results: null, error: null, username: req.username });
+});
+
+// Route vulnérable SQL Injection Expert - Nécessite sqlmap pour dumper toute la base
+app.get('/challenge9/search', (req, res) => {
+    const { identity } = req.query;
+
+    if (!identity) {
+        return res.render('challenge9', { 
+            results: [],
+            error: null,
+            username: req.username
+        });
+    }
+
+    // VULNÉRABLE : Concaténation directe des paramètres
+    const sqlQuery = `SELECT id, username FROM users WHERE id = ${identity}`;
+
+    db.all(sqlQuery, [], (err, rows) => {
+        if (err) {
+            // Retourner une page différente en cas d'erreur pour que sqlmap détecte l'injection
+            res.render('challenge9', { 
+                results: [],
+                error: "Une erreur s'est produite",
+                username: req.username
+            });
+        } else {
+            res.render('challenge9', { 
+                results: rows, 
+                error: null,
+                username: req.username
+            });
+        }
+    });
 });
 
 // ==================== DÉMARRAGE DU SERVEUR ====================
