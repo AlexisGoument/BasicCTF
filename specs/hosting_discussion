@@ -1,0 +1,610 @@
+User: Ce webservice tournait en local jusque la. Maintenant on va essayer de le deployer sur Google Firebase. Pour cela firebase me conseil d'ajouter le code suivant 
+```
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  //apiKey: ...
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+```
+
+GitHub Copilot: Explore CTF app codebase
+
+Voici le plan complet pour migrer vers Firebase. 
+
+Created memory file [](file:///home/ghost/.config/Code/User/workspaceStorage/d312b8c114766142281c8e74d6f03725/GitHub.copilot-chat/memory-tool/memories/MDdmMWRhOWItODI1ZC00NWVjLWE0ZTMtMGQ0ZWJjMzI3MDll/plan.md)
+
+---
+
+## Plan : Migration BasicCTF → Firebase
+
+**TL;DR** : Déployer l'app Express sur Firebase Cloud Functions (serveur), migrer la progression CSV vers Firestore (persistence), utiliser Firebase Anonymous Auth (remplace le cookie base64), et Firebase Hosting pour le CSS statique. SQLite reste dans tmp des Cloud Functions pour préserver les challenges d'injection SQL.
+
+---
+
+### Phase 1 — Firebase Project Setup
+
+1. Installer Firebase CLI et se connecter : `firebase login`
+2. Créer `firebase.json` + `.firebaserc` à la racine du projet (manuellement ou via `firebase init`)
+
+### Phase 2 — Cloud Functions (Express → Function)
+
+3. Modifier package.json : ajouter `firebase-admin`, `firebase-functions`, and `"engines": { "node": "20" }`
+4. Modifier server.js :
+   - Corriger `express.static('public')` → `express.static(path.join(__dirname, 'public'))` (chemin absolu obligatoire en Cloud Functions)
+   - Changer le chemin SQLite : `./database.db` → `/tmp/database.db` (seul dossier writable)
+   - Remplacer `app.listen(PORT)` par `exports.api = functions.https.onRequest(app)` (avec bloc conditionnel pour le dev local)
+
+### Phase 3 — Firestore (remplacement du CSV)
+
+5. Créer `app/firebaseAdmin.js` : initialisation du SDK Admin Firebase
+6. **Réécrire intégralement** progressManager.js : remplacer toutes les opérations `fs` synchrones par des appels Firestore `async/await`
+   - Collection `users`, doc ID = UID Firebase, champs identiques au CSV actuel
+   - `loadAllUsers()`, `getUserProgress()`, `userExists()`, `createUser()`, `updateProgress()` → tous async
+
+### Phase 4 — Firebase Auth (Anonymous)
+
+7. Modifier register.ejs : ajouter le Firebase Client SDK, appeler `signInAnonymously()` avant le submit du formulaire, injecter l'ID token dans un champ caché
+8. Modifier `POST /register` dans `server.js` : vérifier l'ID token avec `admin.auth().verifyIdToken()`, créer le doc Firestore, émettre un **session cookie signé** (`admin.auth().createSessionCookie()`) à la place du cookie base64 actuel
+9. Modifier auth.js : vérifier le session cookie avec `admin.auth().verifySessionCookie()`, charger le username depuis Firestore par UID
+
+### Phase 5 — Hosting + Client SDK
+
+10. Configurer `firebase.json` : Hosting sert public (CSS), toutes les autres requêtes sont redirigées vers la Cloud Function `api`
+11. Ajouter l'initialisation Firebase Client SDK dans header.ejs (le snippet que Firebase t'a fourni). La `firebaseConfig` peut être passée depuis le serveur via une variable EJS ou un script inline
+
+---
+
+### Fichiers concernés
+
+- `firebase.json` — à créer
+- `.firebaserc` — à créer
+- `app/firebaseAdmin.js` — à créer
+- server.js — SQLite path, express.static, export CF
+- progressManager.js — réécriture complète async Firestore
+- auth.js — session cookie + Firestore
+- package.json — dépendances Firebase
+- register.ejs — Firebase Auth SDK
+- header.ejs — Firebase SDK global
+
+---
+
+### Vérification
+
+1. `firebase emulators:start` (Firestore + Auth + Functions + Hosting) — test local complet
+2. Flow registration : anonymous sign-in → session cookie
+3. Challenges SQLi (3 & 4) : DB SQLite dans tmp, re-seedée au cold start
+4. Leaderboard + validation de flags → lit/écrit Firestore
+5. `firebase deploy` — mise en production
+
+---
+
+### Décisions & périmètre
+
+- **SQLite reste dans tmp** (pas Cloud SQL) — les challenges SQLi doivent fonctionner sans modification
+- **Firebase Anonymous Auth** — préserve l'UX sans compte email/password
+- **Challenge 5** (broken auth) inchangé : c'est un formulaire isolé, pas lié à l'auth principale
+- **Toutes les vulnérabilités intentionnelles** (XSS, SQLi, IDOR) sont préservées
+- **Dockerfile** non modifié (outil d'attaque Kali pour les étudiants)
+
+---
+
+Des questions sur l'approche ? Notamment :
+- Le snippet que Firebase t'a montré est du **client-side SDK** (pour Analytics). Il sera intégré dans les vues EJS à l'étape 11, mais la migration serveur ne dépend pas de lui.
+- Toutes les routes actuelles devront être rendues `async` pour supporter Firestore — c'est un changement transversal significatif.
+
+User: 1. En lisant ton cheminement de pensé, je doute  aussi que l'utilisation de Firebase Auth soit utile. Discutons de cette decision vs garder seulement le cookie base64 pour l'authentification.
+2. Je ne connais pas Firebase donc j'ai besoin que tu m'accompagne sur ce sujet. Est-ce que la solution que tu as trouvé c'est du serverless ?
+
+GitHub Copilot: Deux excellentes questions. Voyons-les séparément.
+
+---
+
+## 1. Firebase Auth vs cookie base64 — ma recommandation : garder le cookie base64
+
+Firebase Auth apporterait de la complexité sans bénéfice réel ici. Voici pourquoi :
+
+| Critère | Cookie base64 (actuel) | Firebase Anonymous Auth |
+|---|---|---|
+| Complexité d'implémentation | Nulle (déjà fait) | Forte — client SDK, `signInAnonymously()`, `verifyIdToken()`, session cookie Admin SDK |
+| Intégrité de l'auth | Nulle — volontairement vulnérable | Signée et vérifiée |
+| Pertinence CTF | ✅ L'auth faible **est le message pédagogique** | ❌ Sécurise ce qui doit rester insécure |
+| Compatibilité Firestore | ✅ On remplace juste le `fs.readFile` par un `await db.collection('users').get()` | Nécessite en plus un UID Firebase pour chaque user |
+
+**Décision : on retire Firebase Auth du plan.** La phase 4 entière disparaît. Le flow devient :
+- Cookie base64 inchangé
+- progressManager.js : remplacer les `fs.readFileSync/writeFileSync` par des appels Firestore `async/await`
+- auth.js : remplacer le lookup CSV par un lookup Firestore
+
+---
+
+## 2. Est-ce du serverless ?
+
+**Oui, Firebase Cloud Functions est serverless.** Voici ce que ça veut dire concrètement pour ton app :
+
+**Ce qui change (bien) :**
+- Pas de serveur à gérer, pas de VPS, scale automatique
+- Tu paies à l'invocation (très peu cher pour un CTF)
+- Ça nécessite le plan **Blaze (pay-as-you-go)** — le plan gratuit Spark ne supporte pas Cloud Functions. Mais la free tier est très généreuse (~2M invocations/mois gratuites)
+
+**Ce qui pose problème avec ton app actuelle :**
+
+**Problème A — SQLite multi-instances :** Firebase peut démarrer **plusieurs instances** de la function en parallèle. Chaque instance a son propre tmp isolé. Donc 2 utilisateurs simultanés peuvent se retrouver sur 2 instances avec 2 bases SQLite différentes. Les données seedées sont identiques, mais le `SESSION_UID` (généré par `crypto.randomBytes` au démarrage) sera différent par instance → les flags seraient différents entre instances. **Solution : stocker le `SESSION_UID` dans Firestore, généré une seule fois.**
+
+**Problème B — `comments[]` en mémoire (Challenge 6) :** Le tableau de commentaires XSS est en RAM. Il est réinitialisé à chaque cold start et non partagé entre instances. **Solution : déplacer `comments[]` dans Firestore** (collection `xss_comments`).
+
+**Problème C — Cold starts :** La première requête après une période d'idle prend ~1-3 secondes. Acceptable pour un CTF.
+
+---
+
+## Plan révisé
+
+Je mets à jour le plan en retirant Firebase Auth et en ajoutant les deux problèmes serverless identifiés : 
+
+Plan mis à jour. Voici le résumé révisé :
+
+---
+
+## Plan révisé : Migration BasicCTF → Firebase
+
+**Firebase Auth supprimée.** Architecture simplifiée :
+
+```
+Firebase Hosting → sert CSS statique + rewrites vers Cloud Function "api"
+Cloud Function "api" → Express app
+    → Firestore (users, comments, config/session)
+    → SQLite dans /tmp (challenges 3 & 4 inchangés)
+Cookie base64 → auth middleware lit Firestore au lieu du CSV (comportement identique)
+```
+
+---
+
+### Étapes
+
+**Phase 1 — Setup** : `firebase login`, `firebase init` (Hosting + Functions), plan Blaze activé
+
+**Phase 2 — Cloud Functions** : 3 changements dans server.js :
+- SQLite : `./database.db` → `/tmp/database.db`
+- `express.static('public')` → `express.static(path.join(__dirname, 'public'))` (chemin absolu obligatoire)
+- `app.listen(...)` → `exports.api = functions.https.onRequest(app)` (avec fallback conditionnel pour dev local)
+
+**Phase 3 — Firestore** *(le gros du travail)* :
+- Créer `app/firebaseAdmin.js`
+- Réécrire progressManager.js : CSV → Firestore async (même interface publique)
+- `SESSION_UID` stocké dans Firestore (`config/session`) → flags **cohérents entre toutes les instances**
+- `comments[]` du Challenge 6 → collection Firestore `xss_comments` (stateless oblige)
+
+**Phase 4 — Auth middleware** : rendre `requireUser` async, lookup Firestore au lieu du CSV. Cookie base64 inchangé.
+
+**Phase 5 — Hosting + SDK** : `firebase.json` + snippet Firebase Analytics dans header.ejs
+
+---
+
+### Points importants à retenir
+
+- **Plan Blaze requis** — Cloud Functions n'est pas disponible sur le plan gratuit Spark (mais la free tier est très généreuse)
+- **Cold starts** : ~1-3s de latence sur la première requête après une période d'idle — inévitable en serverless
+- **SQLite multi-instances** : chaque instance a sa propre DB dans tmp, mais c'est ok car les données sont re-seedées à l'identique à chaque démarrage
+- **`firebase emulators:start`** permet de tout tester localement avant de deployer
+
+---
+
+Le plan te convient-il ? Je peux clarifier n'importe quel point avant de passer à l'implémentation.
+
+User: mon applis dispose du plan Spark. Est-ce qu'on peut s'adapter a cette contrainte ?
+
+GitHub Copilot: Le problème central : **Firebase Hosting ne peut pas exécuter du code serveur** (Express, EJS, SQLite) — it only serves static files. Sans Cloud Functions (réservé au plan Blaze), il n'y a **nulle part** où faire tourner ton serveur Express sur Firebase Spark.
+
+Il y a deux directions possibles : 
+
+Analyzing your answers...
+
+Voici la comparaison complète :
+
+---
+
+## Option A — Passer au plan Blaze (Firebase)
+
+| | |
+|---|---|
+| **Coût réel pour un CTF** | ~0€ (free tier Blaze = Spark + Cloud Functions incluses) |
+| **Carte bancaire** | Requise (pour le pay-as-you-go), mais pas débitée si tu restes dans les limites |
+| **Limites gratuites** | 2M invocations/mois, 400K GB-secondes CPU — très largement suffisant |
+| **Code à changer** | Minimal : `app.listen` → `exports.api`, SQLite tmp, `express.static` absolu |
+| **Firestore** | Nécessaire (remplace CSV + comments en mémoire) |
+| **Complexité** | Moyenne — nouvelle infrastructure Firebase à apprendre |
+| **Cold starts** | 1-3s après inactivité (serverless) |
+
+---
+
+## Option B — Alternative gratuite (Railway / Render / Fly.io)
+
+| | Railway | Render | Fly.io |
+|---|---|---|---|
+| **Plan gratuit** | 500h/mois (~21 jours continus) | Oui (spin-down après 15 min) | 3 VMs partagés |
+| **SQLite persistant** | ✅ Volumes | ❌ (éphémère sur free) | ✅ Volumes |
+| **Code à changer** | **Zéro** — app.listen reste tel quel | **Zéro** | **Zéro** |
+| **CSV progress** | ✅ Fonctionne (fichier local) | ❌ Reset à chaque redémarrage | ✅ Fonctionne |
+| **Déploiement** | `railway up` ou GitHub | Connecter GitHub | `flyctl deploy` |
+| **Complexité** | Faible | Faible | Moyenne |
+| **Firebase** | Inutile — on n'en a plus besoin | Inutile | Inutile |
+
+---
+
+## Ma recommandation
+
+**Pour un CTF public, je recommande Railway** :
+- Aucun changement de code (zéro migration)
+- SQLite + CSV fonctionnent nativement avec volumes persistants
+- Déploiement en ~5 minutes via GitHub
+- Le seul compromis : 500h/mois sur le plan gratuit, mais tu peux planifier la fenêtre CTF
+
+**Blaze vaut le coup si** tu veux rester dans l'écosystème Firebase pour d'autres projets ou si tu veux apprendre Firebase en profondeur.
+
+---
+
+Quelle option tu choisis ?
+
+User: est-ce que cloud run et cloud function c'est la meme chose ?
+
+GitHub Copilot: Non, ce sont deux services Google distincts, mais ils partagent la même idée de base (serverless, scale-to-zero).
+
+---
+
+## Cloud Functions vs Cloud Run
+
+| | **Cloud Functions** | **Cloud Run** |
+|---|---|---|
+| **Unité de déploiement** | Une fonction (`exports.api = ...`) | Un conteneur Docker |
+| **Intégration Firebase** | Native (`firebase deploy`) | Aucune liaison directe |
+| **Plan Spark** | ❌ Non disponible | ✅ **Disponible** (240 000 vCPU-secondes/mois gratuits) |
+| **Code à changer** | `app.listen` → `exports.api` | **Zéro** — tu gardes `app.listen(PORT)` |
+| **SQLite** | tmp seulement (éphémère) | tmp seulement (éphémère aussi) |
+| **Déploiement** | `firebase deploy` | `docker build` + `gcloud run deploy` |
+| **Dockerfile** | Inutile | ✅ **Tu en as déjà un** |
+
+---
+
+## Ce qui change pour toi
+
+Cloud Run est **directement pertinent** : ton projet a déjà un Dockerfile. Le serveur tourne avec `app.listen` tel quel. Aucun changement de code.
+
+Le seul problème reste le **CSV** (progress.csv) et **SQLite** (`database.db`) — Cloud Run n'a pas de disque persistant non plus. Donc le choix reste le même :
+- **Garder CSV/SQLite** → les données sont perdues à chaque redémarrage (acceptable si le CTF a une durée définie)
+- **Migrer vers Firestore** → données persistantes, mais du code à réécrire 
+
+Asked a question (Persistance des données)
+
+User: est-ce que cloud run ca va tenir sur un plan spark ?
+
+GitHub Copilot: **Cloud Run n'est pas un service Firebase** — c'est un service **Google Cloud Platform (GCP)** distinct.
+
+Les deux ont leur propre facturation indépendante :
+
+| | Firebase Spark | Google Cloud (Cloud Run) |
+|---|---|---|
+| **Produit** | Firebase | GCP |
+| **Lien entre les deux** | Aucun | Aucun |
+| **Free tier Cloud Run** | N/A | ✅ Inclus dans GCP gratuitement |
+| **Carte bancaire** | Non requise (Spark) | **Requise** pour activer GCP |
+
+La free tier Cloud Run sur GCP est :
+- **2 millions de requêtes/mois** gratuites
+- **180 000 vCPU-secondes/mois** gratuites
+- **Toujours gratuite** (pas une période d'essai)
+
+Donc même constat qu'avec Blaze : **carte bancaire obligatoire** pour activer GCP, mais le coût réel pour un CTF est 0€.
+
+---
+
+## Récapitulatif de toutes les options
+
+| Option | Carte bancaire | Code à changer | Données persistantes |
+|---|---|---|---|
+| **Firebase Blaze + Functions** | ✅ Requise | Moyenne | Firestore |
+| **Cloud Run (GCP)** | ✅ Requise | **Zéro** | Non (sauf Firestore) |
+| **Railway** | ❌ Non requise | **Zéro** | ✅ Oui (volumes) |
+| **Render** | ❌ Non requise | **Zéro** | Non (free tier) |
+
+Si tu veux vraiment **zéro carte bancaire + données persistantes + zéro changement de code** → **Railway** reste la meilleure option.
+
+User: la partie avancée du CTF utilise des scripts de "bruteforce". Le nombre requete risque vite d'exploser. met à jours les options envisagés avec ce nouvelle element en tete
+
+GitHub Copilot: Bonne observation. Regardons d'abord la taille de la wordlist pour estimer le volume de requêtes. 
+
+Searched for regex `.` (`**/app/wordlist.txt`), 5 results
+
+---
+
+## Comparaison mise à jour — impact bruteforce
+
+| | **Firebase Blaze + Functions** | **Cloud Run (GCP)** | **Railway** | **Render** |
+|---|---|---|---|---|
+| **Carte bancaire** | ✅ Requise | ✅ Requise | ❌ Non | ❌ Non |
+| **Code à changer** | Moyen | Zéro | Zéro | Zéro |
+| **Données persistantes** | Firestore | Non (sauf Firestore) | ✅ Volumes | Non |
+| **Brute-force (dirb ~4600 req)** | 🟡 Consomme quota | 🟡 Consomme quota | ✅ Sans impact | ✅ Sans impact |
+| **sqlmap (50-500 req/test)** | ⚠️ Multi-instances → comportement incohérent | ⚠️ Idem | ✅ Instance unique | ✅ Instance unique |
+| **hydra (password spray)** | 💸 Peut dépasser free tier si beaucoup d'étudiants | 💸 Idem | ✅ Sans impact | ✅ Sans impact |
+| **Cold start pendant brute-force** | ⚠️ Timeouts outils | ⚠️ Timeouts outils | ✅ Toujours chaud | ✅ Toujours chaud |
+
+### Problème spécifique serverless + CTF
+
+Avec sqlmap : l'outil détecte les injections en analysant la **cohérence des réponses** sur plusieurs requêtes. Sur un serverless qui peut instancier **plusieurs conteneurs en parallèle**, chaque conteneur a son propre SQLite dans tmp. Deux requêtes successives de sqlmap peuvent tomber sur deux instances avec des états différents → **comportement imprévisible, challenge potentiellement non résolvable**.
+
+---
+
+## Recommandation révisée
+
+**Railway reste la meilleure option pour ce CTF** — un serveur permanent, une seule instance, SQLite cohérent, CSV persistant, zéro carte bancaire, zéro changement de code. La contrainte des 500h/mois est bien suffisante pour une session CTF planifiée.
+
+Veux-tu qu'on parte sur Railway ?
+
+User: ca parait trop beau l'option railway. parlons des contraintes de railway
+
+GitHub Copilot: Voilà les vraies contraintes de Railway, sans filtre :
+
+---
+
+## Les contraintes de Railway
+
+### 1. Pricing instable
+Railway a changé ses tarifs **3 fois en 2 ans**. L'ancien plan "Starter" gratuit n'existe plus. Aujourd'hui :
+- **Trial** : $5 de crédits one-shot (non renouvelables)
+- **Hobby** : $5/mois minimum
+- La carte bancaire est souvent requise même pour le trial
+
+**Donc "zéro carte bancaire" était inexact de ma part.** Railway n'est plus vraiment gratuit.
+
+### 2. Sleep sur inactivité
+Sans plan payant, le conteneur **s'endort après ~30 min d'inactivité** → cold start de 10-30s à la prochaine requête. Même problème qu'un serverless, juste moins fréquent.
+
+### 3. SQLite + brute-force = problème de concurrence
+SQLite n'est pas conçu pour de nombreuses écritures concurrentes. Avec 20 étudiants lançant hydra/sqlmap en simultané :
+- Les requêtes en écriture se sérialisent → **ralentissements importants**
+- Timeouts possibles sur les outils d'attaque
+
+### 4. CSV encore plus fragile
+Le progressManager.js fait un **full-rewrite du fichier entier** à chaque mise à jour. Avec plusieurs utilisateurs validant des flags en même temps → **corruption de fichier possible**.
+
+### 5. 500h/mois = ~21 jours continus
+Pas de problème pour un CTF court, mais il faut planifier la fenêtre.
+
+---
+
+## Vue honnête de toutes les options
+
+| | **Firebase Blaze + Functions** | **Cloud Run** | **Railway** | **Render** |
+|---|---|---|---|---|
+| **Carte bancaire** | ✅ Requise | ✅ Requise | ✅ Requise (en pratique) | ❌ Non |
+| **Vraiment gratuit** | Oui (si dans les limites) | Oui (si dans les limites) | Non ($5/mois ou crédits épuisables) | ✅ Oui |
+| **Données persistantes** | Firestore | Non (sauf Firestore) | ✅ Oui | ❌ Non (free) |
+| **SQLite brute-force** | ❌ Multi-instances | ❌ Multi-instances | 🟡 Single instance mais lent | 🟡 Same |
+| **CSV race condition** | ❌ Grave (multi-instances) | ❌ Grave | ⚠️ Risque (single instance) | ⚠️ Risque |
+| **Cold start** | ⚠️ Oui | ⚠️ Oui | ⚠️ Oui (si inactif) | ⚠️ Oui |
+| **Code à changer** | Moyen | Zéro | Zéro | Zéro |
+
+---
+
+## Vrais problèmes transversaux à toutes les options
+
+Il y a deux problèmes qui existent **indépendamment de la plateforme** et que le déploiement va exposer :
+
+1. **Race condition CSV** : le `progressManager` réécrit tout le fichier à chaque action → corruptible avec plusieurs utilisateurs simultanés. À corriger quelle que soit la plateforme.
+2. **SQLite single-file** : pas problématique avec 5 utilisateurs, mais sous brute-force intensif, les requêtes vont se bloquer mutuellement.
+
+**Ces deux problèmes existent déjà en local** — ils sont juste invisibles car tu es seul à utiliser l'app.
+
+---
+
+Quelle est la contrainte prioritaire pour toi : **zéro coût absolu**, ou **stabilité pendant le CTF** ?
+
+User: rappelle toi, il va y avoir beaucoup de requetes a cause des bruteforce (notamment avec la wordlist rockyou)
+Donc ecrire gratuit (dans les limites) prete a confusion. Retravaille le tableau des potions
+
+GitHub Copilot: Très bon point. RockYou fait **14 millions d'entrées**. Avec 10 étudiants sur hydra simultanément, on parle de **140 millions de requêtes** rien que pour le challenge 5.
+
+---
+
+## Estimation du volume de requêtes (10 étudiants)
+
+| Outil | Wordlist | Requêtes/étudiant | Total × 10 |
+|---|---|---|---|
+| hydra (challenge 5) | rockyou | ~14M | **~140M** |
+| dirb (challenge 2) | common.txt | ~4 600 | ~46K |
+| sqlmap (challenges 3 & 4) | interne | ~2 000 | ~20K |
+| **Total** | | | **~140M+** |
+
+---
+
+## Tableau des options révisé
+
+| | **Firebase Blaze + Functions** | **Cloud Run** | **Railway Hobby** | **Render** |
+|---|---|---|---|---|
+| **Modèle de facturation** | **Par requête** | **Par requête** | Forfait mensuel | Forfait (gratuit limité) |
+| **Free tier requêtes** | 2M/mois | 2M/mois | Illimité | Illimité |
+| **Coût avec rockyou × 10 étudiants** | 💸 **~$55+ rien que challenge 5** | 💸 **~$55+** | $5/mois fixe | $0 |
+| **Carte bancaire** | Requise | Requise | Requise | ❌ Non |
+| **Données persistantes** | Firestore | Non | ✅ Volumes | ❌ Non (free) |
+| **SQLite brute-force cohérent** | ❌ Multi-instances | ❌ Multi-instances | ✅ Instance unique | ✅ Instance unique |
+| **Cold start pendant brute-force** | ⚠️ Timeouts outils | ⚠️ Timeouts outils | ⚠️ Si inactif | ⚠️ Si inactif |
+| **Code à changer** | Moyen | Zéro | Zéro | Zéro |
+
+---
+
+## Conclusion
+
+**Serverless est fondamentalement incompatible avec un CTF brute-force.** Le modèle par-requête transforme le challenge pédagogique en facture imprévisible.
+
+Les seules options viables sont les **serveurs persistants** :
+- **Render** : gratuit, zéro carte, mais données éphémères (progression perdue au redémarrage)
+- **Railway Hobby** : $5/mois, données persistantes, stable
+
+Et la question de fond reste : est-ce que la perte de progression au redémarrage est acceptable pour ton CTF ?
+
+User: Ok analysons maintenant les limites du forfait grautit de Render
+
+GitHub Copilot: Les limites du plan gratuit Render, analysées pour ce cas précis :
+
+---
+
+## Render Free Tier — Limites techniques
+
+### 1. Spin-down après 15 min d'inactivité
+Cold start de **30 à 50 secondes**. Hydra et dirb ont des timeouts courts → les outils vont **crasher ou se déconnecter** au réveil du service. Les étudiants verront des connexions refusées.
+
+### 2. Filesystem éphémère
+SQLite (`database.db`) et CSV (`progress.csv`) sont **effacés à chaque redémarrage/spin-down**. Avec le spin-down toutes les 15 min, en pratique la progression est perdue à chaque pause.
+
+### 3. Bande passante : 100 GB/mois
+
+Le chiffre critique :
+
+| Scenario | Requêtes | Taille réponse HTML | Bande passante |
+|---|---|---|---|
+| hydra rockyou × 1 étudiant | ~14M | ~8 KB | **~112 GB** |
+| hydra rockyou × 5 étudiants | ~70M | ~8 KB | **~560 GB** |
+
+**Un seul étudiant qui complète le challenge 5 avec rockyou dépasse déjà le quota.** Render coupe le service jusqu'au mois suivant.
+
+### 4. CPU partagé + throttlé (0.1 vCPU)
+Render free throttle agressivement le CPU. Sous sqlmap + hydra simultanés, les temps de réponse vont grimper à plusieurs secondes par requête → timeouts outils.
+
+### 5. 750 heures d'instance/mois
+Avec le spin-down, en pratique le service ne tourne que quand il y a du trafic. Pas un problème bloquant en soi, mais ça s'additionne avec le reste.
+
+---
+
+## Verdict
+
+| Problème | Sévérité |
+|---|---|
+| Spin-down 15 min → crash hydra/dirb | 🔴 Bloquant |
+| Bande passante 100 GB → dépassée sans effort | 🔴 Bloquant |
+| Filesystem éphémère → progression perdue | 🔴 Bloquant |
+| CPU throttlé → ralentissements | 🟡 Gênant |
+
+**Render gratuit n'est pas viable pour ce CTF.** La bande passante seule le disqualifie dès le premier étudiant sur rockyou.
+
+---
+
+## État des lieux complet
+
+En toute honnêteté, il n'existe pas de plateforme **gratuite + stable + compatible brute-force rockyou**. Le volume de trafic généré est simplement incompatible avec les free tiers.
+
+Les options restantes réalistes :
+
+| | **Render payant** | **Railway Hobby** | **VPS (Hetzner/OVH)** |
+|---|---|---|---|
+| **Prix** | $7/mois | $5/mois | ~$4/mois |
+| **Brute-force** | ✅ Trafic illimité | ✅ Trafic illimité | ✅ Trafic illimité |
+| **Données persistantes** | ✅ Disque | ✅ Volumes | ✅ Disque |
+| **Cold starts** | ❌ Non (always-on) | ❌ Non | ❌ Non |
+| **Code à changer** | Zéro | Zéro | Zéro |
+| **Contrôle** | Limité | Limité | Total |
+
+Un VPS bas de gamme est en fait l'option la plus simple et la plus adaptée à ce cas d'usage : `node server.js` démarre tel quel, aucun changement de code.
+
+User: VPS ?
+
+GitHub Copilot: **Virtual Private Server** — un serveur Linux dédié loué chez un hébergeur. Tu as un accès root complet, tu installes ce que tu veux, tu gères toi-même.
+
+---
+
+## Comment ça marche pour ton app
+
+```
+VPS (Ubuntu)
+├── node server.js        ← app lancée telle quelle, port 3000
+├── nginx                 ← reverse proxy (port 80/443 → 3000)
+├── database.db           ← SQLite persiste sur le disque
+├── app/data/progress.csv ← CSV persiste sur le disque
+└── PM2                   ← garde node en vie, relance si crash
+```
+
+Déploiement : `git pull` + `pm2 restart`. C'est tout.
+
+---
+
+## Hébergeurs adaptés à ce budget
+
+| Hébergeur | Offre | Prix | Bande passante |
+|---|---|---|---|
+| **Hetzner** (🇩🇪) | CX22 — 2 vCPU, 4 GB RAM | ~$4/mois | **20 TB/mois** |
+| **OVH** (🇫🇷) | VPS Starter — 1 vCPU, 2 GB RAM | ~$4/mois | **100 Mbit/s illimité** |
+| **Contabo** | 4 vCPU, 6 GB RAM | ~$5/mois | **32 TB/mois** |
+
+Avec 20 TB de bande passante, rockyou × 50 étudiants ne pose aucun problème.
+
+---
+
+## Ce que tu gagnes vs les autres options
+
+- **Zéro changement de code** — `node server.js` comme en local
+- **Brute-force sans limite** — pas de compteur de requêtes
+- **Données persistantes** — SQLite et CSV sur disque réel
+- **Contrôle total** — tu redémarres, tu sauvegardes, tu monitores
+
+## Ce que tu perds
+
+- **Gestion manuelle** — mises à jour OS, sécurité SSH, certificat HTTPS à configurer (Let's Encrypt, ~15 min)
+- **Toujours allumé** — tu paies même quand le CTF ne tourne pas (mais $4/mois...)
+- **Pas "Firebase"** — complètement hors de l'écosystème Google
+
+---
+
+C'est l'option la plus simple techniquement pour **ce type d'app**. Veux-tu qu'on parte là-dessus ou tu as d'autres contraintes (doit rester dans GCP/Firebase, besoin d'un nom de domaine, etc.) ?
+
+User: effectivement nous sommes dans une impasse. Refait une estimation des couts pour chaque option en imaginant que je limite la wordlist rockyou à 100 items
+
+GitHub Copilot: Bonne décision. Voici ce que ça change concrètement.
+
+---
+
+## Estimation avec wordlist limitée à 100 items
+
+| Outil | Wordlist | Requêtes/étudiant | Total × 10 étudiants |
+|---|---|---|---|
+| hydra (challenge 5) | rockyou tronqué | **100** | **1 000** |
+| dirb (challenge 2) | common.txt | ~4 600 | ~46 000 |
+| sqlmap (challenges 3 & 4) | interne | ~2 000 | ~20 000 |
+| **Total** | | | **~67 000 requêtes** |
+| **Bande passante** | ~8 KB/réponse | | **~536 MB** |
+
+---
+
+## Tableau des options révisé
+
+| | **Firebase Blaze + Functions** | **Cloud Run** | **Render Free** | **VPS Hetzner** |
+|---|---|---|---|---|
+| **Carte bancaire** | ✅ Requise | ✅ Requise | ❌ Non | ✅ Requise |
+| **Coût estimé** | **$0** (67K << 2M free) | **$0** (67K << 2M free) | **$0** | **$4/mois** |
+| **Bande passante utilisée** | 536 MB / ∞ | 536 MB / ∞  | 536 MB / 100 GB | 536 MB / 20 TB |
+| **Données persistantes** | Firestore (à migrer) | Non (sans Firestore) | ❌ Éphémères | ✅ Disque |
+| **Cold start pendant dirb** | ⚠️ Possible | ⚠️ Possible | ⚠️ Spin-down 15 min | ✅ Non |
+| **SQLite multi-instances** | ⚠️ Risque faible à ce volume | ⚠️ Risque faible | ✅ OK | ✅ OK |
+| **Code à changer** | Moyen | Zéro | Zéro | Zéro |
+
+---
+
+## Ce qui change
+
+Avec 67K requêtes, **tous les free tiers sont largement respectés**. L'impasse financière est levée.
+
+Les vrais critères de choix redeviennent **techniques** :
+
+- **Render free reste bloqué** sur l'éphémérité du filesystem (progression perdue au spin-down) et le spin-down lui-même qui peut perturber dirb (~4600 requêtes à la suite)
+- **Firebase Blaze** devient viable financièrement mais nécessite de migrer le CSV et les comments vers Firestore
+- **Cloud Run** viable mais même problème d'éphémérité sans Firestore
+- **VPS** : toujours zéro changement de code, seul à avoir des données 100% persistantes sans migration
+
+La question se simplifie : **veux-tu investir du temps à migrer le code (Firebase), ou payer $4/mois pour zéro migration (VPS) ?**
